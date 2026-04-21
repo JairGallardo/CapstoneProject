@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Selecciona método de pago"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <RadioGroup
+        android:id="@+id/rgMetodosPago"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp">
+
+        <RadioButton
+            android:id="@+id/rbYape"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Yape" />
+        <RadioButton android:id="@+id/rbPlin" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Plin" />
+        <RadioButton android:id="@+id/rbEfectivo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Efectivo" />
+    </RadioGroup>
+
+    <LinearLayout
+        android:id="@+id/layoutDatosPago"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:background="#F0F7FF"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvInfoPago"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Datos de transferencia"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnConfirmarPago"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="CONFIRMAR PAGO"
+        android:backgroundTint="@color/blue_confidence" />
+</LinearLayout>

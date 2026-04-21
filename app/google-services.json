@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "616367356395",
+    "project_id": "domingo-8d503",
+    "storage_bucket": "domingo-8d503.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:616367356395:android:01b038a7b442a3664581ae",
+        "android_client_info": {
+          "package_name": "com.example.domingo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkFCCAJ2hrStfx-xHChuc5gjo7Ld177mU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

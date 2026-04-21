@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F7F8"
+    tools:context=".ui.NegociacionActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarNegociacion"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/blue_confidence"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                app:cardCornerRadius="17.5dp">
+                <ImageView
+                    android:id="@+id/ivFotoChat"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@android:drawable/ic_menu_gallery"
+                    android:scaleType="centerCrop"/>
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:id="@+id/tvNombreChat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Nombre del Usuario"
+                android:textColor="@color/white"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </androidx.appcompat.widget.Toolbar>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChatNegociacion"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:padding="8dp"
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toTopOf="@id/btnIrAPagar"
+        app:layout_constraintTop_toBottomOf="@id/toolbarNegociacion" />
+
+    <Button
+        android:id="@+id/btnIrAPagar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PAGAR AHORA"
+        android:backgroundTint="#4CAF50"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/layoutControlNegociacion"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/layoutControlNegociacion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="12dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:id="@+id/layoutOferta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <EditText
+                    android:id="@+id/etMontoOferta"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:hint="S/ Oferta"
+                    android:inputType="numberDecimal"
+                    android:background="@android:drawable/edit_text"
+                    android:paddingHorizontal="15dp" />
+
+                <Button
+                    android:id="@+id/btnEnviarOferta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Ofertar"
+                    android:backgroundTint="@color/blue_confidence" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnAsistenteIA"
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    android:src="@android:drawable/ic_menu_help"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/blue_confidence"
+                    android:contentDescription="Asistente de IA" />
+
+                <EditText
+                    android:id="@+id/etMensajeChat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Escribe un mensaje..."
+                    android:maxLines="3"
+                    android:background="@null"
+                    android:padding="10dp" />
+
+                <ImageButton
+                    android:id="@+id/btnEnviarMensaje"
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    android:src="@android:drawable/ic_menu_send"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/blue_confidence" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

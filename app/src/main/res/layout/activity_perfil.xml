@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_gray">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:gravity="center_horizontal">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="4dp">
+                <ImageView
+                    android:id="@+id/ivPerfilFoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@android:drawable/ic_menu_camera"
+                    android:scaleType="centerCrop" />
+            </androidx.cardview.widget.CardView>
+
+            <ImageButton
+                android:id="@+id/btnCambiarFoto"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="bottom|end"
+                android:background="@drawable/circle_background_blue"
+                android:src="@android:drawable/ic_menu_camera"
+                app:tint="@color/white"
+                android:elevation="6dp" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Toca la cámara para actualizar foto"
+            android:textSize="12sp"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_dark"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPerfilNombre"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Nombre Completo"
+                android:inputType="textPersonName"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/tvPerfilCorreo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="correo@ejemplo.com"
+            android:padding="12dp"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/text_dark"
+            android:textStyle="italic"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPerfilTelefono"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Número de Teléfono"
+                android:inputType="phone"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutConfiguracionServicio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="20dp"
+            android:background="@android:color/white"
+            android:padding="15dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mi Portafolio de Trabajos"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:textSize="16sp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvPortafolio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mi Oferta Comercial"
+                android:textStyle="bold"
+                android:textColor="@color/blue_confidence"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Especialidades:"
+                android:textSize="12sp"
+                android:layout_marginTop="15dp"/>
+
+            <Button
+                android:id="@+id/btnSeleccionarCategorias"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Seleccionar categorías"
+                android:layout_marginTop="5dp"
+                app:strokeColor="@color/blue_confidence"
+                android:textColor="@color/blue_confidence"/>
+
+            <TextView
+                android:id="@+id/tvCategoriasSeleccionadas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ninguna seleccionada"
+                android:padding="8dp"
+                android:textSize="13sp"
+                android:textColor="@color/blue_confidence"
+                android:textStyle="italic" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:prefixText="S/ "
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPrecioBasePerfil"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Precio base"
+                    android:inputType="numberDecimal"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDescripcionPerfil"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Descripción de tu servicio"
+                    android:lines="3"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"/>
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnGuardarCambios"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="Guardar Cambios"
+            android:layout_marginTop="30dp"
+            android:backgroundTint="@color/blue_confidence"/>
+
+        <Button
+            android:id="@+id/btnCerrarSesion"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="Cerrar Sesión"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/background_gray"
+            android:textColor="@color/text_dark"/>
+
+        <TextView
+            android:id="@+id/tvEliminarCuenta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Eliminar mi cuenta definitivamente"
+            android:textColor="#FF0000"
+            android:layout_marginTop="40dp"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+</ScrollView>

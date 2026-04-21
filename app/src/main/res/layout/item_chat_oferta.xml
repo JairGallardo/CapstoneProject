@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_margin="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OFERTA DE SERVICIO"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/blue_confidence"/>
+
+        <TextView
+            android:id="@+id/tvMontoOferta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="S/ 50.00"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnRechazarOferta"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Rechazar"
+                android:textColor="#F44336"/>
+
+            <Button
+                android:id="@+id/btnAceptarOferta"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Aceptar"
+                android:backgroundTint="@color/blue_confidence"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvEstadoOferta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            android:textStyle="italic"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

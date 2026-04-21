@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bienvenido a DominGO"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="30dp"/>
+
+    <EditText
+        android:id="@+id/etLoginCorreo"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:hint="Correo"
+        android:inputType="textEmailAddress"
+        android:layout_marginBottom="15dp"/>
+
+    <EditText
+        android:id="@+id/etLoginPass"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:hint="Contraseña"
+        android:inputType="textPassword"
+        android:layout_marginBottom="25dp"/>
+
+    <Button
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:text="Iniciar Sesión"
+        android:backgroundTint="@color/blue_confidence"/>
+
+    <TextView
+        android:id="@+id/tvIrARegistro"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="¿No tienes cuenta? Regístrate aquí"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/blue_confidence"/>
+
+</LinearLayout>

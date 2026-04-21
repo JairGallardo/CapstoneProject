@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp"
+    android:background="@color/background_gray">
+
+    <TextView
+        android:id="@+id/tvGracias"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="¡Servicio Confirmado!"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:textColor="@color/blue_confidence"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardWhatsapp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        app:cardCornerRadius="15dp"
+        app:layout_constraintTop_toBottomOf="@id/tvGracias">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="15dp"
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Coordina los detalles finales por:"
+                android:textSize="14sp"/>
+            <Button
+                android:id="@+id/btnAbrirWhatsapp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Enviar WhatsApp"
+                android:backgroundTint="#25D366"
+                android:drawableStart="@android:drawable/stat_notify_chat"
+                android:drawablePadding="10dp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+        android:id="@+id/tvCalifica"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="¿Cómo fue tu experiencia?"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/cardWhatsapp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <RatingBar
+        android:id="@+id/ratingBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:numStars="5"
+        android:stepSize="1.0"
+        app:layout_constraintTop_toBottomOf="@id/tvCalifica"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/btnFinalizarApp"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:text="Terminar y Volver al Inicio"
+        android:backgroundTint="@color/blue_confidence"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

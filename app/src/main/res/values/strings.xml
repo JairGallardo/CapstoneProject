@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">DominGO</string>
+    <string-array name="categorias_servicios">
+        <item>Seleccionar categoría (Toca aquí)</item>
+        <item>Gasfitero (Plomero)</item>
+        <item>Electricista</item>
+        <item>Limpieza de Hogar/Oficina</item>
+        <item>Lavandería a Domicilio</item>
+        <item>Pintor (Interiores/Exteriores)</item>
+        <item>Carpintero</item>
+        <item>Cuidado de Mascotas</item>
+        <item>Jardinería</item>
+        <item>Técnico de Computadoras</item>
+        <item>Soporte Técnico de Electrodomésticos</item>
+    </string-array>
+</resources>
