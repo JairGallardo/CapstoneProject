@@ -12,7 +12,20 @@
           "package_name": "com.example.domingo"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "616367356395-p2q2793ds485csbhinruv8u0hrmthlo3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.domingo",
+            "certificate_hash": "7f992abe0816b9c43f5a3f18b30b9677d4951c17"
+          }
+        },
+        {
+          "client_id": "616367356395-66ot8uabbqkos23khiq41evj7fn5etro.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBkFCCAJ2hrStfx-xHChuc5gjo7Ld177mU"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "616367356395-66ot8uabbqkos23khiq41evj7fn5etro.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

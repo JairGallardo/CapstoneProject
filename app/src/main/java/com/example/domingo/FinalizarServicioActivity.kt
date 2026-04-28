@@ -11,7 +11,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import java.io.File
 
+// ... tus imports actuales ...
+import com.google.firebase.firestore.FirebaseFirestore
+
 class FinalizarServicioActivity : AppCompatActivity() {
+
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,29 +25,56 @@ class FinalizarServicioActivity : AppCompatActivity() {
         val btnWhatsapp = findViewById<Button>(R.id.btnAbrirWhatsapp)
         val btnFinalizar = findViewById<Button>(R.id.btnFinalizarApp)
 
-        // Supongamos que el número del trabajador viene de la pantalla anterior
-        val numeroTelefono = "51900000000" // Formato: CodigoPais + Numero (Ej: 51 para Perú)
-        val mensaje = "Hola, te contacto desde DominGO para coordinar el servicio."
+        // 1. Recibimos los datos que enviamos desde NegociacionActivity
+        val trabajadorId = intent.getStringExtra("RECEPTOR_ID")
+        val monto = intent.getDoubleExtra("MONTO_FINAL", 0.0)
+        val metodo = intent.getStringExtra("METODO_PAGO") ?: "Efectivo"
 
         btnWhatsapp.setOnClickListener {
-            try {
-                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
-                val url = "https://api.whatsapp.com/send?phone=$numeroTelefono&text=${android.net.Uri.encode(mensaje)}"
-                intent.data = android.net.Uri.parse(url)
-                startActivity(intent)
-            } catch (e: Exception) {
-                android.widget.Toast.makeText(this, "WhatsApp no instalado", android.widget.Toast.LENGTH_SHORT).show()
+            if (trabajadorId != null) {
+                // 2. Buscamos el teléfono real del trabajador en Firestore
+                db.collection("usuarios").document(trabajadorId).get()
+                    .addOnSuccessListener { doc ->
+                        val telefonoReal = doc.getString("telefono")
+                        if (!telefonoReal.isNullOrEmpty()) {
+                            abrirWhatsApp(telefonoReal, monto, metodo)
+                        } else {
+                            Toast.makeText(this, "El trabajador no tiene teléfono registrado", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Error al conectar con el servidor", Toast.LENGTH_SHORT).show()
+                    }
             }
         }
 
         btnFinalizar.setOnClickListener {
-            android.widget.Toast.makeText(this, "¡Gracias por tu calificación!", android.widget.Toast.LENGTH_LONG).show()
-
-            val intent = android.content.Intent(this, MainActivity::class.java)
-            intent.flags = android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+            Toast.makeText(this, "¡Servicio finalizado con éxito!", Toast.LENGTH_LONG).show()
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
             startActivity(intent)
+            finish()
         }
     }
+
+    private fun abrirWhatsApp(telefono: String, monto: Double, metodo: String) {
+        try {
+            // Limpiamos el teléfono por si tiene espacios o el "+"
+            val telfLimpio = telefono.replace(" ", "").replace("+", "")
+            // Aseguramos el prefijo de Perú (51) si el número tiene 9 dígitos
+            val destino = if (telfLimpio.length == 9) "51$telfLimpio" else telfLimpio
+
+            val mensaje = "Hola! Te contacto desde DominGO. Confirmamos el servicio por S/ $monto pagado vía $metodo."
+
+            val intent = Intent(Intent.ACTION_VIEW)
+            val url = "https://api.whatsapp.com/send?phone=$destino&text=${android.net.Uri.encode(mensaje)}"
+            intent.data = android.net.Uri.parse(url)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "WhatsApp no instalado", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun compartirVoucher(file: File) {
         try {
             val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)

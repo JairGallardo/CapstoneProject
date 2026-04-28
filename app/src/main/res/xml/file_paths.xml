@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <external-path name="my_images" path="Android/data/com.example.domingo/files" />
+    <files-path name="my_files" path="." />
+
     <cache-path name="my_cache" path="." />
+    <external-path name="my_external" path="Android/data/${applicationId}/files" />
 </paths>

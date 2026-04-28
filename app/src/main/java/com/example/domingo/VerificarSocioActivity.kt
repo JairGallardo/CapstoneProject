@@ -93,6 +93,7 @@ class VerificarSocioActivity : AppCompatActivity() {
                         .update(datos)
                         .addOnSuccessListener {
                             Toast.makeText(this, "Documentos enviados. Espera la verificación.", Toast.LENGTH_LONG).show()
+                            FirebaseAuth.getInstance().signOut()
                             finish()
                         }
                         .addOnFailureListener {

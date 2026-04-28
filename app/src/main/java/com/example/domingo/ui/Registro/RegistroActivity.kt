@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.domingo.MainActivity
 import com.example.domingo.R
+import com.example.domingo.VerificarSocioActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -22,7 +23,6 @@ class RegistroActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registro)
 
-        // Configuración de la barra superior con botón atrás
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Crear Cuenta"
 
@@ -33,7 +33,7 @@ class RegistroActivity : AppCompatActivity() {
         val etNombre = findViewById<EditText>(R.id.etNombre)
         val etCorreo = findViewById<EditText>(R.id.etCorreo)
         val etPass = findViewById<EditText>(R.id.etPassword)
-        val etTelefono = findViewById<EditText>(R.id.etTelefono) // Asegúrate que este ID exista en tu XML
+        val etTelefono = findViewById<EditText>(R.id.etTelefono)
         val rbTrabajador = findViewById<RadioButton>(R.id.rbTrabajador)
 
         btnRegistrar.setOnClickListener {
@@ -42,8 +42,6 @@ class RegistroActivity : AppCompatActivity() {
             val pass = etPass.text.toString()
             val telefono = etTelefono.text.toString().trim()
             val rol = if (rbTrabajador.isChecked) "trabajador" else "cliente"
-
-            // --- VALIDACIONES DE SEGURIDAD ---
 
             if (nombre.isEmpty() || correo.isEmpty() || pass.isEmpty() || telefono.isEmpty()) {
                 Toast.makeText(this, "Por favor, llena todos los campos", Toast.LENGTH_SHORT).show()
@@ -55,8 +53,8 @@ class RegistroActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (telefono.length < 9) {
-                etTelefono.error = "Ingresa un número de teléfono válido (9 dígitos)"
+            if (telefono.length != 9 || !telefono.startsWith("9")) {
+                etTelefono.error = "El número debe empezar con 9 y tener 9 dígitos"
                 return@setOnClickListener
             }
 
@@ -74,7 +72,6 @@ class RegistroActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Si pasa todas las validaciones, procedemos
             crearCuentaEnFirebase(nombre, correo, pass, telefono, rol)
         }
     }
@@ -97,7 +94,7 @@ class RegistroActivity : AppCompatActivity() {
                 val datosUsuario = hashMapOf(
                     "nombre" to nombre,
                     "correo" to correo,
-                    "telefono" to telefono, // Nuevo campo guardado
+                    "telefono" to telefono,
                     "rol" to rol,
                     "uid" to userId,
                     "rating" to 0.0,
@@ -107,10 +104,15 @@ class RegistroActivity : AppCompatActivity() {
 
                 db.collection("usuarios").document(userId).set(datosUsuario)
                     .addOnSuccessListener {
-                        Toast.makeText(this, "Registro exitoso como $rol", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Registro exitoso", Toast.LENGTH_SHORT).show()
 
-                        // Redirección común al MainActivity
-                        startActivity(Intent(this, MainActivity::class.java))
+                        if (rol == "trabajador") {
+                            val intent = Intent(this, VerificarSocioActivity::class.java)
+                            startActivity(intent)
+                        } else {
+                            val intent = Intent(this, MainActivity::class.java)
+                            startActivity(intent)
+                        }
                         finish()
                     }
             } else {

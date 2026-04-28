@@ -59,13 +59,12 @@ class ChatAdapter(
         if (holder is TextoViewHolder) {
             holder.tvMensaje.text = mensaje.contenido
         } else if (holder is OfertaViewHolder) {
-            holder.tvMonto.text = "S/ ${String.format("%.2f", mensaje.montoOferta)}"
+            holder.tvMonto.text = String.format("S/ %.2f", mensaje.montoOferta)
 
-            // Lógica de botones de oferta
             if (mensaje.estadoOferta == "PENDIENTE") {
                 holder.tvEstado.visibility = View.GONE
-                // Solo el trabajador puede aceptar o rechazar si él NO envió la oferta
-                if (esTrabajador && mensaje.emisorId != userId) {
+
+                if (mensaje.emisorId != userId) {
                     holder.btnAceptar.visibility = View.VISIBLE
                     holder.btnRechazar.visibility = View.VISIBLE
                 } else {
@@ -76,7 +75,7 @@ class ChatAdapter(
                 holder.btnAceptar.visibility = View.GONE
                 holder.btnRechazar.visibility = View.GONE
                 holder.tvEstado.visibility = View.VISIBLE
-                holder.tvEstado.text = "Estado: ${mensaje.estadoOferta}"
+                holder.tvEstado.text = "Oferta ${mensaje.estadoOferta}"
             }
 
             holder.btnAceptar.setOnClickListener { onOfertaClick(mensaje, "ACEPTADO") }

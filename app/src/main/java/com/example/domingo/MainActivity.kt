@@ -15,9 +15,12 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import com.example.domingo.ui.ListadoTrabajadoresActivity
+import com.example.domingo.ui.NegociacionActivity
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.common.ConnectionResult
 
 class MainActivity : AppCompatActivity() {
 
@@ -74,17 +77,18 @@ class MainActivity : AppCompatActivity() {
         val layoutTrabajador = findViewById<CardView>(R.id.layoutTrabajador)
         val switchEstado = findViewById<SwitchCompat>(R.id.switchEstado)
 
-        db.collection("usuarios").document(uid).get()
-            .addOnSuccessListener { doc ->
-                if (doc.exists() && doc.getString("rol") == "trabajador") {
-                    layoutTrabajador?.visibility = View.VISIBLE
-                    val estaActivo = doc.getBoolean("disponible") ?: false
-                    switchEstado?.isChecked = estaActivo
-                    switchEstado?.text = if (estaActivo) "Disponible" else "Desconectado"
-
-                    switchEstado?.setOnCheckedChangeListener { _, isChecked ->
-                        actualizarDisponibilidad(isChecked, switchEstado)
+        db.collection("negociaciones")
+            .whereEqualTo("trabajadorId", uid) // Busca chats donde él sea el trabajador
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null && !snapshot.isEmpty) {
+                    val doc = snapshot.documents[0] // Tomamos el chat más reciente
+                    val intent = Intent(this, NegociacionActivity::class.java).apply {
+                        putExtra("CHAT_ID", doc.id)
+                        putExtra("RECEPTOR_ID", doc.getString("clienteId"))
+                        putExtra("ES_TRABAJADOR", true)
+                        putExtra("SOCIO_NOMBRE", "Nuevo Cliente")
                     }
+                    startActivity(intent)
                 }
             }
     }
@@ -93,6 +97,16 @@ class MainActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
 
         if (disponible) {
+            // ✅ NUEVO: Validar Google Play Services
+            val googleApiAvailability = GoogleApiAvailability.getInstance()
+            val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
+            if (resultCode != ConnectionResult.SUCCESS) {
+                switch.isChecked = false
+                Toast.makeText(this, "Actualiza Google Play Services para usar ubicación", Toast.LENGTH_LONG).show()
+                googleApiAvailability.makeGooglePlayServicesAvailable(this)
+                return
+            }
+
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 switch.isChecked = false
                 requestLocationPermissionLauncher.launch(arrayOf(
@@ -112,8 +126,14 @@ class MainActivity : AppCompatActivity() {
                 db.collection("usuarios").document(uid).update(updates)
                     .addOnSuccessListener {
                         switch.text = "Disponible"
-                        Toast.makeText(this, "¡En línea!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "¡En línea! 📍", Toast.LENGTH_SHORT).show()
+                    }.addOnFailureListener {
+                        Toast.makeText(this, "Error al activar", Toast.LENGTH_SHORT).show()
+                        switch.isChecked = false
                     }
+            }.addOnFailureListener {
+                Toast.makeText(this, "Error obteniendo ubicación", Toast.LENGTH_SHORT).show()
+                switch.isChecked = false
             }
         } else {
             db.collection("usuarios").document(uid).update("disponible", false)

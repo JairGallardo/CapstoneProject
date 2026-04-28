@@ -27,7 +27,7 @@ class LoginActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
         if (auth.currentUser != null) {
             verificarRolYRedirigir()
-            return // Importante poner el return para que no cargue el resto del login
+            return
         }
 
         val btnLogin = findViewById<Button>(R.id.btnLogin)
@@ -57,21 +57,19 @@ class LoginActivity : AppCompatActivity() {
         val userId = auth.currentUser?.uid
         db.collection("usuarios").document(userId!!).get().addOnSuccessListener { document ->
             val rol = document.getString("rol")
-            val verificado = document.getString("verificado") // "si", "no", o "en_revision"
+            val verificado = document.getString("verificado")
 
             if (rol == "trabajador") {
-                // Si es trabajador y NO ha enviado documentos, lo mandamos a verificar
+
                 if (verificado == "no" || verificado == null) {
                     startActivity(Intent(this, VerificarSocioActivity::class.java))
                 } else if (verificado == "en_revision") {
                     Toast.makeText(this, "Tu perfil sigue en revisión. Ten paciencia.", Toast.LENGTH_LONG).show()
-                    auth.signOut() // Lo sacamos para que no entre a la app aún
+                    auth.signOut()
                 } else {
-                    // Si ya está verificado ("si"), entra a su panel de control
                     startActivity(Intent(this, MainActivity::class.java))
                 }
             } else {
-                // Si es cliente, entra directo
                 startActivity(Intent(this, MainActivity::class.java))
             }
             finish()

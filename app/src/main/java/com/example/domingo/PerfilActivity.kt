@@ -207,11 +207,11 @@ class PerfilActivity : AppCompatActivity() {
                 finish()
             }
     }
-
     private fun bitmapToBase64(bitmap: Bitmap): String {
         val stream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream)
-        return Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 60, stream) // Bajamos un poco más la calidad
+        val byteArray = stream.toByteArray()
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP) // NO_WRAP es más seguro para Firestore
     }
 
     private fun mostrarImagenBase64(base64String: String, imageView: ImageView) {
@@ -220,7 +220,6 @@ class PerfilActivity : AppCompatActivity() {
             imageView.setImageBitmap(BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size))
         } catch (e: Exception) { e.printStackTrace() }
     }
-    // Configuración del RecyclerView en el portafolio
     private fun setupPortafolio() {
         val uid = auth.currentUser?.uid ?: return
 
@@ -245,15 +244,17 @@ class PerfilActivity : AppCompatActivity() {
             val rol = doc.getString("rol")
             val verificado = doc.getString("verificado")
 
-            if (rol == "trabajador" && verificado == "si") {
+            if (rol == "trabajador") {
                 layoutServicio.visibility = View.VISIBLE
 
-                // Cargamos los datos adicionales del trabajador
                 findViewById<EditText>(R.id.etPrecioBasePerfil).setText(doc.getDouble("precioBase")?.toString() ?: "")
                 findViewById<EditText>(R.id.etDescripcionPerfil).setText(doc.getString("descripcion") ?: "")
 
-                // Solo si es trabajador verificado, cargamos el portafolio
-                setupPortafolio()
+                if (verificado == "si") {
+                    setupPortafolio()
+                }
+            } else {
+                layoutServicio.visibility = View.GONE
             }
         }
     }

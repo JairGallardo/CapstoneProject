@@ -20,14 +20,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField(
-            "String",
-            "GEMINI_KEY",
-            "\"${project.findProperty("GEMINI_KEY")}\""
-        )
 }
 
     buildTypes {
+        debug { }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -63,6 +59,11 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
-    implementation("com.google.ai.client.generativeai:generativeai:0.6.0")
-
+    //IA Groq
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // Opcional: para ver los logs de lo que envías y recibes
+    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+    implementation("com.google.android.gms:play-services-base:18.2.0")
+    implementation("com.google.firebase:firebase-bom:32.7.0")
 }
