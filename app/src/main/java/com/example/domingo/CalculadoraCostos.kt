@@ -35,7 +35,7 @@ object CalculadoraCostos {
 
     /**
      * Fórmula de Haversine para calcular distancia entre dos coordenadas GPS
-     * (Cálculo matemático puro sin costo de API)
+     * (Cálculo matemática de ambas distancias)
      */
     fun calcularDistanciaKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val r = 6371 // Radio de la Tierra en KM

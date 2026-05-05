@@ -33,7 +33,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayOutputStream
 import androidx.appcompat.app.AlertDialog
-import com.example.domingo.FinalizarServicioActivity
+import com.example.domingo.ui.FinalizarServicioActivity
 
 class NegociacionActivity : AppCompatActivity() {
 
@@ -95,6 +95,10 @@ class NegociacionActivity : AppCompatActivity() {
         val etMensajeChat = findViewById<EditText>(R.id.etMensajeChat)
         val btnEnviarMensaje = findViewById<ImageButton>(R.id.btnEnviarMensaje)
         val btnAsistenteIA = findViewById<ImageButton>(R.id.btnAsistenteIA)
+        val btnEliminarChat = findViewById<ImageButton>(R.id.btnEliminarChatCompleto)
+        btnEliminarChat?.setOnClickListener {
+            mostrarDialogoCancelarNegociacion()
+        }
 
         setupRecyclerView()
         escucharMensajes()
@@ -157,6 +161,44 @@ class NegociacionActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun mostrarDialogoCancelarNegociacion() {
+        AlertDialog.Builder(this)
+            .setTitle("Cancelar Servicio")
+            .setMessage("¿Estás seguro de que deseas cancelar la negociación y borrar todo el historial? Esta acción no se puede deshacer.")
+            .setPositiveButton("Sí, cancelar") { _, _ ->
+                borrarNegociacionCompleta()
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun borrarNegociacionCompleta() {
+        val idChat = chatId ?: return
+
+        val updates = mapOf(
+            "activo" to false,
+            "ultimoMensaje" to "Trato cancelado"
+        )
+
+        db.collection("negociaciones").document(idChat)
+            .update(updates)
+            .addOnSuccessListener {
+                db.collection("negociaciones").document(idChat).collection("mensajes")
+                    .get()
+                    .addOnSuccessListener { mensajes ->
+                        val batch = db.batch()
+                        for (doc in mensajes) batch.delete(doc.reference)
+                        batch.commit().addOnSuccessListener {
+                            Toast.makeText(this, "Negociación finalizada", Toast.LENGTH_SHORT).show()
+                            finish()
+                        }
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("DELETE_ERROR", "Error: ${e.message}")
+                Toast.makeText(this, "No se pudo cancelar el trato", Toast.LENGTH_SHORT).show()
+            }
+    }
     private fun ejecutarConsultaIA(prompt: String, bitmap: Bitmap? = null) {
         val esVision = bitmap != null
         val modelo = if (esVision) "llama-3.2-11b-vision-preview" else "llama3-8b-8192"
@@ -184,7 +226,7 @@ class NegociacionActivity : AppCompatActivity() {
                 val respuestaIA = response.choices[0].message.content
 
                 withContext(Dispatchers.Main) {
-                    enviarMensaje("🤖 IA: $respuestaIA", "TEXTO")
+                    enviarMensaje("IA: $respuestaIA", "TEXTO")
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -208,27 +250,61 @@ class NegociacionActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         val miId = auth.currentUser?.uid ?: ""
-        adapter = ChatAdapter(miId, esTrabajador) { mensaje, nuevoEstado ->
-            actualizarEstadoOferta(mensaje, nuevoEstado)
-        }
+
+        adapter = ChatAdapter(
+            miId,
+            esTrabajador,
+            { mensaje, nuevoEstado -> actualizarEstadoOferta(mensaje, nuevoEstado) },
+            { mensaje -> mostrarDialogoEliminar(mensaje) }
+        )
+
         findViewById<RecyclerView>(R.id.rvChatNegociacion).apply {
             layoutManager = LinearLayoutManager(this@NegociacionActivity)
             adapter = this@NegociacionActivity.adapter
         }
     }
+    private fun mostrarDialogoEliminar(mensaje: Mensaje) {
+        AlertDialog.Builder(this)
+            .setTitle("Eliminar mensaje")
+            .setMessage("¿Deseas eliminar este mensaje para todos?")
+            .setPositiveButton("Eliminar") { _, _ ->
+                db.collection("negociaciones").document(chatId!!)
+                    .collection("mensajes")
+                    .whereEqualTo("timestamp", mensaje.timestamp)
+                    .get()
+                    .addOnSuccessListener { docs ->
+                        for (doc in docs) doc.reference.delete()
+                        Toast.makeText(this, "Mensaje eliminado", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
 
     private fun enviarMensaje(contenido: String, tipo: String, monto: Double? = null) {
         val uid = auth.currentUser?.uid ?: return
-        val dataNegociacion = hashMapOf(
-            "clienteId" to uid,
-            "trabajadorId" to receptorId,
+        val nombreSocio = intent.getStringExtra("SOCIO_NOMBRE") ?: "Socio"
+
+        val updatesRaiz = hashMapOf<String, Any>(
             "ultimoMensaje" to contenido,
             "timestamp" to System.currentTimeMillis(),
-            "nombreCliente" to "Cliente"
+            "activo" to true
         )
 
         db.collection("negociaciones").document(chatId!!)
-            .set(dataNegociacion, com.google.firebase.firestore.SetOptions.merge())
+            .update(updatesRaiz)
+            .addOnFailureListener {
+                val dataInicial = hashMapOf(
+                    "clienteId" to if (esTrabajador) receptorId ?: "" else uid,
+                    "trabajadorId" to if (esTrabajador) uid else (receptorId ?: ""),
+                    "ultimoMensaje" to contenido,
+                    "timestamp" to System.currentTimeMillis(),
+                    "nombreCliente" to "Usuario DominGO",
+                    "nombreTrabajador" to if (esTrabajador) "Yo" else nombreSocio,
+                    "activo" to true
+                )
+                db.collection("negociaciones").document(chatId!!).set(dataInicial)
+            }
 
         val mensaje = hashMapOf(
             "emisorId" to uid,
@@ -243,6 +319,7 @@ class NegociacionActivity : AppCompatActivity() {
 
     private fun escucharMensajes() {
         val btnIrAPagar = findViewById<Button>(R.id.btnIrAPagar)
+        val btnContinuarProceso = findViewById<Button>(R.id.btnContinuarProceso)
 
         db.collection("negociaciones").document(chatId!!)
             .collection("mensajes")
@@ -254,14 +331,26 @@ class NegociacionActivity : AppCompatActivity() {
 
                     val ofertaAceptada = lista.find { it.tipo == "OFERTA" && it.estadoOferta == "ACEPTADO" }
 
-                    if (ofertaAceptada != null && !esTrabajador) {
-                        btnIrAPagar.visibility = View.VISIBLE
-                        btnIrAPagar.text = "PAGAR S/ ${String.format("%.2f", ofertaAceptada.montoOferta)}"
-                        btnIrAPagar.setOnClickListener {
-                            mostrarDialogoMetodoPago(ofertaAceptada.montoOferta)
+                    if (ofertaAceptada != null) {
+                        if (!esTrabajador) {
+                            btnContinuarProceso.visibility = View.VISIBLE
+                            btnContinuarProceso.text = "CONTINUAR PROCESO S/ ${String.format("%.2f", ofertaAceptada.montoOferta)}"
+                            btnContinuarProceso.setOnClickListener {
+                                val intentTicket = Intent(this, TicketClienteActivity::class.java).apply {
+                                    putExtra("CHAT_ID", chatId)
+                                    putExtra("MONTO_SERVICIO", ofertaAceptada.montoOferta)
+                                    putExtra("TRABAJADOR_ID", receptorId)
+                                    putExtra("SOCIO_NOMBRE", intent.getStringExtra("SOCIO_NOMBRE"))
+                                }
+                                startActivity(intentTicket)
+                            }
+                        } else {
+                            btnIrAPagar.visibility = View.GONE
+                            btnContinuarProceso.visibility = View.GONE
                         }
                     } else {
                         btnIrAPagar.visibility = View.GONE
+                        btnContinuarProceso.visibility = View.GONE
                     }
 
                     if (lista.isNotEmpty()) {
@@ -272,12 +361,29 @@ class NegociacionActivity : AppCompatActivity() {
     }
 
     private fun actualizarEstadoOferta(mensaje: Mensaje, nuevoEstado: String) {
+        if (chatId == null) return
+
+        // Buscamos el documento del mensaje específico
         db.collection("negociaciones").document(chatId!!)
             .collection("mensajes")
             .whereEqualTo("timestamp", mensaje.timestamp)
             .get()
             .addOnSuccessListener { docs ->
-                for (doc in docs) doc.reference.update("estadoOferta", nuevoEstado)
+                for (doc in docs) {
+                    doc.reference.update("estadoOferta", nuevoEstado)
+                        .addOnSuccessListener {
+                            val accion = if (nuevoEstado == "ACEPTADO") "aceptada" else "rechazada"
+                            Toast.makeText(this, "Oferta $accion", Toast.LENGTH_SHORT).show()
+
+                            // Si el trabajador acepta, enviamos un aviso automático al chat
+                            if (nuevoEstado == "ACEPTADO" && esTrabajador) {
+                                enviarMensaje("✅ He aceptado la oferta. ¡Estoy listo para iniciar!", "TEXTO")
+                            }
+                        }
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error al actualizar oferta", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -308,7 +414,6 @@ class NegociacionActivity : AppCompatActivity() {
                 putExtra("MONTO_FINAL", monto)
                 putExtra("METODO_PAGO", metodo)
                 putExtra("RECEPTOR_ID", receptorId)
-                // Se envía el nombre del socio que ya recibimos en el intent original
                 putExtra("SOCIO_NOMBRE", intent.getStringExtra("SOCIO_NOMBRE"))
             }
             startActivity(intentFinalizar)

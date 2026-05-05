@@ -7,7 +7,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.domingo.MainActivity
+import com.example.domingo.ui.MainActivity
 import com.example.domingo.R
 import com.example.domingo.ui.Registro.RegistroActivity
 import com.example.domingo.VerificarSocioActivity

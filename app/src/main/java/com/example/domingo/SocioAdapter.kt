@@ -41,7 +41,6 @@ class SocioAdapter(
 
         holder.nombre.text = socio.nombre
 
-        // Rating y trabajos
         if (socio.trabajosRealizados == 0) {
             holder.rating.text = "Nuevo (Sin trabajos)"
             holder.rating.setTextColor(holder.itemView.context.getColor(android.R.color.holo_blue_dark))
@@ -53,7 +52,6 @@ class SocioAdapter(
         holder.precio.text = String.format(Locale.getDefault(), "Total: S/ %.2f", socio.tarifaSugerida)
         holder.distancia.text = String.format(Locale.getDefault(), "A %.1f km de ti", socio.distancia)
 
-        // Foto con manejo de errores mejorado
         if (!socio.fotoPerfilB64.isNullOrEmpty()) {
             try {
                 val imageBytes = Base64.decode(socio.fotoPerfilB64, Base64.DEFAULT)
@@ -66,19 +64,24 @@ class SocioAdapter(
         } else {
             holder.foto.setImageResource(R.drawable.ic_food)
         }
+        if (socio.descripcion.isNotEmpty()) {
+            holder.precio.text = socio.descripcion
+            holder.btnNegociar.text = "Abrir Chat"
+            holder.distancia.visibility = View.GONE
+        } else {
+            holder.btnNegociar.text = "Ofertar"
+            holder.distancia.visibility = View.VISIBLE
+        }
 
-        // ✅ FIXED: Botón negociar usa callback SEGURO
         holder.btnNegociar.setOnClickListener {
             try {
-                onClick(socio)  // ← Usa el callback del ListadoTrabajadoresActivity
+                onClick(socio)
             } catch (e: Exception) {
                 Log.e("SocioAdapter", "Error en click: ${e.message}")
-                // Fallback directo (por si acaso)
                 abrirNegociacionDirecto(holder.itemView.context, socio)
             }
         }
 
-        // ✅ BONUS: Click en toda la card también funciona
         holder.itemView.setOnClickListener {
             onClick(socio)
         }
@@ -86,7 +89,6 @@ class SocioAdapter(
 
     override fun getItemCount() = listaSocios.size
 
-    // ✅ FIXED: Método para actualizar lista (llamado desde ListadoTrabajadoresActivity)
     fun actualizarLista(nuevaLista: List<Socio>) {
         listaSocios.clear()
         listaSocios.addAll(nuevaLista)
@@ -95,7 +97,6 @@ class SocioAdapter(
 
     private fun abrirNegociacionDirecto(context: android.content.Context, socio: Socio) {
         val intent = Intent(context, NegociacionActivity::class.java).apply {
-            // ✅ FIXED: Parámetros CORRECTOS que espera NegociacionActivity
             putExtra("CHAT_ID", "chat_${socio.id}_${System.currentTimeMillis()}")
             putExtra("RECEPTOR_ID", socio.id)
             putExtra("ES_TRABAJADOR", false)

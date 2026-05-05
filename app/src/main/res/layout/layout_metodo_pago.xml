@@ -23,28 +23,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Yape" />
-        <RadioButton android:id="@+id/rbPlin" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Plin" />
-        <RadioButton android:id="@+id/rbEfectivo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Efectivo" />
-    </RadioGroup>
-
-    <LinearLayout
-        android:id="@+id/layoutDatosPago"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:background="#F0F7FF"
-        android:orientation="vertical"
-        android:padding="12dp"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/tvInfoPago"
-            android:layout_width="match_parent"
+        <RadioButton
+            android:id="@+id/rbPlin"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Datos de transferencia"
-            android:textColor="@color/black"
-            android:textSize="14sp" />
-    </LinearLayout>
+            android:text="Plin" />
+        <RadioButton
+            android:id="@+id/rbEfectivo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Efectivo" />
+    </RadioGroup>
 
     <Button
         android:id="@+id/btnConfirmarPago"

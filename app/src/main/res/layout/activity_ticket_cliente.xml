@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#F5F7F8">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📋 Completa tu Ticket"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardElevation="8dp"
+            app:cardCornerRadius="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Datos del Servicio"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:id="@+id/tvTrabajador"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Trabajador"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tvMontoServicio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="S/ 0.00"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#4CAF50"
+                    android:layout_marginTop="8dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Datos precargados (edita si es necesario)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etNombreCliente"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Nombre"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp" />
+
+        <EditText
+            android:id="@+id/etApellidoCliente"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Apellido"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp" />
+
+        <EditText
+            android:id="@+id/etEmailCliente"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Correo"
+            android:inputType="textEmailAddress"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp"
+            android:enabled="true" />
+
+        <EditText
+            android:id="@+id/etTelefonoCliente"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Teléfono *"
+            android:inputType="phone"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp" />
+
+        <EditText
+            android:id="@+id/etDireccion"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:hint="Dirección completa *"
+            android:inputType="textPostalAddress"
+            android:gravity="top"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp" />
+
+        <EditText
+            android:id="@+id/etReferencias"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Referencias (esquinas, color casa, etc)"
+            android:gravity="top"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp" />
+
+        <Button
+            android:id="@+id/btnConfirmarTicket"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="✅ CONFIRMAR TICKET Y PAGAR"
+            android:textSize="16sp"
+            android:backgroundTint="#4CAF50"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</ScrollView>

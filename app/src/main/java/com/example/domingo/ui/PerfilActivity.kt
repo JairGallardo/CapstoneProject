@@ -1,6 +1,5 @@
-package com.example.domingo
+package com.example.domingo.ui
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -8,18 +7,25 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.domingo.PortafolioAdapter
+import com.example.domingo.R
 import com.example.domingo.model.FotoTrabajo
 import com.example.domingo.ui.Login.LoginActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.ByteArrayOutputStream
-import kotlin.jvm.java
 
 class PerfilActivity : AppCompatActivity() {
 
@@ -29,14 +35,12 @@ class PerfilActivity : AppCompatActivity() {
     private var fotoTemporalB64: String? = null
     private var userRol: String? = null
 
-    // --- VARIABLES PARA MULTI-CATEGORÍA ---
     private val categoriasDisponibles = arrayOf("Gasfitero", "Electricista", "Limpieza", "Lavandería", "Mascotas", "Pintor", "Carpintero")
     private val seleccionados = BooleanArray(categoriasDisponibles.size)
     private val misCategorias = mutableListOf<String>()
 
-    // Lanzador de cámara
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
+        if (result.resultCode == RESULT_OK) {
             val imageBitmap = result.data?.extras?.get("data") as? Bitmap
             imageBitmap?.let {
                 val scaledBitmap = Bitmap.createScaledBitmap(it, 480, 480, true)
@@ -61,7 +65,6 @@ class PerfilActivity : AppCompatActivity() {
 
         val userId = auth.currentUser?.uid
 
-        // Referencias a la UI
         val etNombre = findViewById<EditText>(R.id.etPerfilNombre)
         val etTelefono = findViewById<EditText>(R.id.etPerfilTelefono)
         val tvCorreo = findViewById<TextView>(R.id.tvPerfilCorreo)
@@ -73,7 +76,6 @@ class PerfilActivity : AppCompatActivity() {
         val btnSalir = findViewById<Button>(R.id.btnCerrarSesion)
 
         userId?.let { uid ->
-            // CARGAR DATOS DESDE FIRESTORE
             db.collection("usuarios").document(uid).get().addOnSuccessListener { doc ->
                 if (doc.exists()) {
                     userRol = doc.getString("rol")
@@ -84,7 +86,6 @@ class PerfilActivity : AppCompatActivity() {
                     val fotoB64 = doc.getString("fotoPerfilB64")
                     if (!fotoB64.isNullOrEmpty()) mostrarImagenBase64(fotoB64, ivPerfilFoto)
 
-                    // Cargar Categorías si es trabajador
                     if (userRol == "trabajador") {
                         val catsGuardadas = doc.get("categorias") as? List<String>
                         catsGuardadas?.let {
@@ -92,7 +93,6 @@ class PerfilActivity : AppCompatActivity() {
                             misCategorias.addAll(it)
                             tvCategoriasVer.text = misCategorias.joinToString(", ")
 
-                            // Sincronizar checks para el diálogo
                             for (i in categoriasDisponibles.indices) {
                                 if (misCategorias.contains(categoriasDisponibles[i])) {
                                     seleccionados[i] = true
@@ -105,16 +105,13 @@ class PerfilActivity : AppCompatActivity() {
             verificarEstatusTrabajador(uid)
         }
 
-        // Evento: Abrir selector de categorías
         btnSeleccionarCats.setOnClickListener { mostrarSelectorCategorias(tvCategoriasVer) }
 
-        // Evento: Cambiar Foto
         btnCambiarFoto.setOnClickListener {
             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             cameraLauncher.launch(intent)
         }
 
-        // Evento: Guardar Cambios
         btnGuardar.setOnClickListener {
             val nuevoNombre = etNombre.text.toString().trim()
             val nuevoTelefono = etTelefono.text.toString().trim()
@@ -139,7 +136,6 @@ class PerfilActivity : AppCompatActivity() {
                 updates["precioBase"] = precio
                 updates["descripcion"] = desc
                 updates["categorias"] = misCategorias
-                // Guardamos la primera como principal para filtros rápidos
                 if (misCategorias.isNotEmpty()) updates["categoria"] = misCategorias[0]
             }
 
@@ -209,9 +205,9 @@ class PerfilActivity : AppCompatActivity() {
     }
     private fun bitmapToBase64(bitmap: Bitmap): String {
         val stream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 60, stream) // Bajamos un poco más la calidad
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 60, stream)
         val byteArray = stream.toByteArray()
-        return Base64.encodeToString(byteArray, Base64.NO_WRAP) // NO_WRAP es más seguro para Firestore
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
     }
 
     private fun mostrarImagenBase64(base64String: String, imageView: ImageView) {

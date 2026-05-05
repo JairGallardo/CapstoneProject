@@ -11,7 +11,6 @@ import com.example.domingo.CalculadoraCostos
 import com.example.domingo.R
 import com.example.domingo.SocioAdapter
 import com.example.domingo.model.Socio
-import com.example.domingo.ui.NegociacionActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -23,21 +22,23 @@ class ListadoTrabajadoresActivity : AppCompatActivity() {
     private val clienteLat = -7.1583
     private val clienteLon = -78.5153
 
+    private var categoriaActual: String = "Servicios"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_listado_trabajadores)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val categoria = intent.getStringExtra("CATEGORIA_SELECCIONADA") ?: "Servicios"
-        supportActionBar?.title = "Especialistas: $categoria"
+        categoriaActual = intent.getStringExtra("CATEGORIA_SELECCIONADA") ?: "Servicios"
+        supportActionBar?.title = "Especialistas: $categoriaActual"
 
-        findViewById<TextView>(R.id.tvTituloCategoria).text = "Especialistas en $categoria"
+        findViewById<TextView>(R.id.tvTituloCategoria).text = "Especialistas en $categoriaActual"
 
         val rv = findViewById<RecyclerView>(R.id.rvTrabajadores)
         rv.layoutManager = LinearLayoutManager(this)
 
-        cargarTrabajadores(categoria, rv)
+        cargarTrabajadores(categoriaActual, rv)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -111,16 +112,18 @@ class ListadoTrabajadoresActivity : AppCompatActivity() {
             return
         }
 
-        val chatId = "chat_${uidActual}_${socio.id}"
+        val catLimpia = categoriaActual.replace(" ", "_")
+        val chatIdUnico = "chat_${uidActual}_${socio.id}_$catLimpia"
 
         val intent = Intent(this, NegociacionActivity::class.java).apply {
-            putExtra("CHAT_ID", chatId)
+            putExtra("CHAT_ID", chatIdUnico)
             putExtra("RECEPTOR_ID", socio.id)
             putExtra("ES_TRABAJADOR", false)
             putExtra("SOCIO_NOMBRE", socio.nombre)
+            putExtra("CATEGORIA", categoriaActual) // Pasamos la categoría para mostrarla en el chat
         }
 
         startActivity(intent)
-        Toast.makeText(this, "Abriendo chat con ${socio.nombre}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Iniciando servicio de $categoriaActual con ${socio.nombre}", Toast.LENGTH_SHORT).show()
     }
 }

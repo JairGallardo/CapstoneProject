@@ -8,5 +8,6 @@ data class Socio(
     val trabajosRealizados: Int = 0,
     val tarifaSugerida: Double = 0.0,
     val distancia: Double = 0.0,
-    val descripcion: String = ""
+    val descripcion: String = "",
+    val receptorId: String = ""
 )

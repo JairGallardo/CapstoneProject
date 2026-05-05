@@ -25,16 +25,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DominGO">
         <activity
-            android:name=".PerfilActivity"
+            android:name=".ui.PerfilActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:exported="false" />
         <activity
             android:name=".ui.Registro.RegistroActivity"
             android:exported="false" />
         <activity
-            android:name=".FinalizarServicioActivity"
+            android:name=".ui.FinalizarServicioActivity"
             android:exported="false" />
         <activity
             android:name=".ui.NegociacionActivity"
@@ -44,6 +44,8 @@
             android:exported="false" />
         <activity
             android:name=".VerificarSocioActivity"
+            android:exported="false" />
+        <activity android:name=".ui.TicketClienteActivity"
             android:exported="false" />
         <activity
             android:name=".ui.Login.LoginActivity"
