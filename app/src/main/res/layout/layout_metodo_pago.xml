@@ -10,36 +10,59 @@
         android:layout_height="wrap_content"
         android:text="Selecciona método de pago"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
 
     <RadioGroup
         android:id="@+id/rgMetodosPago"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp">
-
-        <RadioButton
-            android:id="@+id/rbYape"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Yape" />
-        <RadioButton
-            android:id="@+id/rbPlin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Plin" />
-        <RadioButton
-            android:id="@+id/rbEfectivo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Efectivo" />
+        android:layout_height="wrap_content">
+        <RadioButton android:id="@+id/rbYape" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Yape" />
+        <RadioButton android:id="@+id/rbPlin" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Plin" />
+        <RadioButton android:id="@+id/rbEfectivo" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Efectivo" />
     </RadioGroup>
+
+    <!-- Sección desplegable para Yape/Plin -->
+    <LinearLayout
+        android:id="@+id/layoutDetallesPago"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_marginTop="10dp"
+        android:background="#F0F0F0"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/tvNombreTitular"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cargando nombre..."
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvCelularPago"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cargando número..."
+            android:layout_marginTop="4dp" />
+
+        <ImageView
+            android:id="@+id/ivQrPago"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:src="@android:drawable/ic_menu_gallery"
+            android:contentDescription="Código QR de pago" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/btnConfirmarPago"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
+        android:backgroundTint="@color/blue_confidence"
         android:text="CONFIRMAR PAGO"
-        android:backgroundTint="@color/blue_confidence" />
+        android:textColor="@color/white" />
 </LinearLayout>

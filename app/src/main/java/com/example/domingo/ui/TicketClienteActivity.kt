@@ -1,7 +1,6 @@
 package com.example.domingo.ui
 
 import android.app.AlertDialog
-import android.content.Intent
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -35,8 +34,19 @@ class TicketClienteActivity : AppCompatActivity() {
         cargarDatosCliente()
 
         findViewById<Button>(R.id.btnConfirmarTicket).setOnClickListener {
-            mostrarOpcionesPago()
+            guardarTicketDirecto()
         }
+    }
+
+    private fun guardarTicketDirecto() {
+        val direccion = findViewById<EditText>(R.id.etDireccion).text.toString().trim()
+        val telefono = findViewById<EditText>(R.id.etTelefonoCliente).text.toString().trim()
+
+        if (direccion.isEmpty() || telefono.isEmpty()) {
+            Toast.makeText(this, "Completa dirección y teléfono", Toast.LENGTH_SHORT).show()
+            return
+        }
+        guardarTicketYEnviarChat("PENDIENTE_AL_FINAL")
     }
 
     private fun cargarDatosCliente() {
@@ -48,26 +58,6 @@ class TicketClienteActivity : AppCompatActivity() {
                 findViewById<EditText>(R.id.etEmailCliente).setText(doc.getString("email") ?: "")
                 findViewById<EditText>(R.id.etTelefonoCliente).setText(doc.getString("telefono") ?: "")
             }
-    }
-
-    private fun mostrarOpcionesPago() {
-        val direccion = findViewById<EditText>(R.id.etDireccion).text.toString().trim()
-        val telefono = findViewById<EditText>(R.id.etTelefonoCliente).text.toString().trim()
-        val referencias = findViewById<EditText>(R.id.etReferencias).text.toString().trim()
-
-        if (direccion.isEmpty() || telefono.isEmpty()) {
-            Toast.makeText(this, "Completa dirección y teléfono", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("¿Cuándo pagar?")
-            .setMessage("Elige cuándo deseas realizar el pago:")
-            .setPositiveButton("Pagar al finalizar el trabajo") { _, _ ->
-                guardarTicketYEnviarChat("PAGAR_FINAL")
-            }
-            .setNegativeButton("Pagar ahora (adelanto)", null)
-            .show()
     }
 
     private fun guardarTicketYEnviarChat(metodoPago: String) {
@@ -91,15 +81,14 @@ class TicketClienteActivity : AppCompatActivity() {
             "email" to email,
             "referencias" to referencias,
             "metodoPago" to metodoPago,
-            "estado" to "ENVIADO_TRABAJADOR",
+            "estado" to "TRABAJO_EN_CURSO",
             "timestamp" to System.currentTimeMillis()
         )
 
         db.collection("tickets").add(ticketData)
             .addOnSuccessListener { ticketDoc ->
                 enviarTicketAlChat(ticketDoc.id, direccion, costoTotal, metodoPago)
-
-                Toast.makeText(this, "Ticket enviado al trabajador", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Servicio iniciado.", Toast.LENGTH_LONG).show()
                 finish()
             }
     }
@@ -108,16 +97,24 @@ class TicketClienteActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
 
         val mensajeTicket = """
-             **TICKET DE SERVICIO CONFIRMADO**
+            ╔══════════════════════╗
+               TICKET DE SERVICIO
+            ╚══════════════════════╝
             
-             Costo Total: S/ ${String.format("%.2f", costoTotal)}
-             Dirección: $direccion
-             Teléfono: ${findViewById<EditText>(R.id.etTelefonoCliente).text}
-            ️ Referencias: ${findViewById<EditText>(R.id.etReferencias).text}
-             Pago: $metodoPago
+            RESUMEN DEL PAGO
+            --------------------------------------
+            Total a pagar: S/ ${String.format("%.2f", costoTotal)}
+            Método: $metodoPago
             
-             Ticket ID: $ticketId
-             ¡Estoy listo para recibirte!
+            DETALLES DE ENTREGA
+            --------------------------------------
+            Dirección: $direccion
+            Teléfono: ${findViewById<EditText>(R.id.etTelefonoCliente).text}
+            Ref: ${findViewById<EditText>(R.id.etReferencias).text}
+            
+            --------------------------------------
+            ID: $ticketId
+            ¡El servicio ha comenzado!
         """.trimIndent()
 
         val mensajeData = hashMapOf(
@@ -125,7 +122,8 @@ class TicketClienteActivity : AppCompatActivity() {
             "contenido" to mensajeTicket,
             "tipo" to "TICKET",
             "timestamp" to System.currentTimeMillis(),
-            "ticketId" to ticketId
+            "ticketId" to ticketId,
+            "montoOferta" to costoTotal
         )
 
         db.collection("negociaciones").document(chatId!!).collection("mensajes").add(mensajeData)

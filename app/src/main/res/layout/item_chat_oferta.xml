@@ -6,22 +6,24 @@
     android:layout_gravity="center"
     android:layout_margin="12dp"
     app:cardCornerRadius="16dp"
-    app:cardElevation="4dp">
+    app:cardElevation="6dp">
 
     <LinearLayout
-        android:layout_width="250dp"
+        android:layout_width="260dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="20dp"
         android:gravity="center">
 
         <TextView
+            android:id="@+id/tvTituloOferta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="OFERTA DE SERVICIO"
             android:textSize="12sp"
             android:textStyle="bold"
-            android:textColor="@color/blue_confidence"/>
+            android:textColor="@color/blue_confidence"
+            android:letterSpacing="0.1"/>
 
         <TextView
             android:id="@+id/tvMontoOferta"
@@ -30,9 +32,11 @@
             android:text="S/ 50.00"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp"
+            android:textColor="#212121"/>
 
         <LinearLayout
+            android:id="@+id/layoutBotonesOferta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -58,10 +62,15 @@
 
         <TextView
             android:id="@+id/tvEstadoOferta"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:visibility="gone"
-            android:textStyle="italic"/>
+            android:textSize="13sp"
+            android:textColor="#333333"
+            android:textStyle="normal"
+            android:typeface="monospace"
+            android:gravity="start"
+            android:lineSpacingExtra="2dp"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

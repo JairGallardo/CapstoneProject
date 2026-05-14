@@ -10,6 +10,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -22,11 +23,14 @@ import com.example.domingo.ui.PerfilActivity
 import com.example.domingo.R
 import com.example.domingo.SocioAdapter
 import com.example.domingo.model.Socio
+import com.example.domingo.ui.ListadoTrabajadoresActivity
+import com.example.domingo.ui.NegociacionActivity
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.jvm.java
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,8 +38,8 @@ class MainActivity : AppCompatActivity() {
     private val auth = FirebaseAuth.getInstance()
     private lateinit var bandejaAdapter: SocioAdapter
     private val fusedLocationClient by lazy { LocationServices.getFusedLocationProviderClient(this) }
-
     private val requestLocationPermissionLauncher = registerForActivityResult(
+
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val fineLocation = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
@@ -53,7 +57,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         setupListeners()
         setupBuscador()
         verificarRolTrabajador()
@@ -72,6 +75,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun verificarRolTrabajador() {
+
         val uid = auth.currentUser?.uid ?: return
 
         val layoutTrabajador = findViewById<CardView>(R.id.layoutTrabajador)
@@ -92,20 +96,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.btnVerMensajes)?.setOnClickListener {
-            Log.d("BANDEJA", "Botón mensajes clickeado")
-            Toast.makeText(this, "Abriendo bandeja...", Toast.LENGTH_SHORT).show()  // ← AGREGAR
+            val tvGreeting = findViewById<TextView>(R.id.tvGreeting)
+            val searchCard = findViewById<androidx.cardview.widget.CardView>(R.id.searchCard)
 
             if (rvBandeja.visibility == View.GONE) {
                 rvBandeja.visibility = View.VISIBLE
                 gridCategorias.visibility = View.GONE
+                searchCard.visibility = View.GONE // Ocultamos buscador en bandeja
+                tvGreeting.text = "Bandeja de Entrada" // Cambiamos el título
                 cargarBandejaEntrada()
             } else {
                 rvBandeja.visibility = View.GONE
                 gridCategorias.visibility = View.VISIBLE
+                searchCard.visibility = View.VISIBLE // Mostramos buscador de nuevo
+                tvGreeting.text = "¡Hola! ¿Qué necesitas hoy?" // Restauramos saludo
             }
         }
     }
-
     private fun cargarBandejaEntrada() {
         val uid = auth.currentUser?.uid ?: return
         val rvBandeja = findViewById<RecyclerView>(R.id.rvBandejaEntrada)
@@ -128,51 +135,73 @@ class MainActivity : AppCompatActivity() {
                 if (error != null) return@addSnapshotListener
 
                 val listaSocios = mutableListOf<Socio>()
-                snapshot?.forEach { doc ->
-                    val receptorId: String
-                    val nombreAMostrar: String
+                val totalDocumentos = snapshot?.size() ?: 0
 
-                    if (esPerfilTrabajador) {
-                        receptorId = doc.getString("clienteId") ?: ""
-                        nombreAMostrar = doc.getString("nombreCliente") ?: "Cliente"
-                    } else {
-                        receptorId = doc.getString("trabajadorId") ?: ""
-                        nombreAMostrar = doc.getString("nombreTrabajador") ?: "Trabajador"
-                    }
-
-                    listaSocios.add(
-                        Socio(
-                            id = doc.id,
-                            nombre = nombreAMostrar,
-                            descripcion = doc.getString("ultimoMensaje") ?: "",
-                            receptorId = receptorId
-                        )
-                    )
+                if (totalDocumentos == 0) {
+                    actualizarAdapter(listaSocios, rvBandeja, esPerfilTrabajador)
+                    return@addSnapshotListener
                 }
 
-                if (!::bandejaAdapter.isInitialized) {
-                    bandejaAdapter = SocioAdapter(listaSocios) { socio ->
-                        val intent = Intent(this, NegociacionActivity::class.java).apply {
-                            putExtra("CHAT_ID", socio.id)
-                            putExtra("RECEPTOR_ID", socio.receptorId)
-                            putExtra("ES_TRABAJADOR", esPerfilTrabajador)
-                            putExtra("SOCIO_NOMBRE", socio.nombre)
+                var procesados = 0
+                snapshot?.forEach { doc ->
+                    val receptorId = if (esPerfilTrabajador) doc.getString("clienteId") ?: ""
+                    else doc.getString("trabajadorId") ?: ""
+
+                    val ultimoMsg = doc.getString("ultimoMensaje") ?: "Nuevo mensaje"
+
+                    db.collection("usuarios").document(receptorId).get().addOnSuccessListener { userRef ->
+                        val nombreReal = userRef.getString("nombre") ?: "Usuario DominGO"
+                        val fotoReal = userRef.getString("fotoPerfilB64") ?: ""
+
+                        listaSocios.add(
+                            Socio(
+                                id = doc.id,
+                                nombre = nombreReal,
+                                descripcion = ultimoMsg,
+                                receptorId = receptorId,
+                                fotoPerfilB64 = fotoReal
+                            )
+                        )
+
+                        procesados++
+                        if (procesados == totalDocumentos) {
+                            actualizarAdapter(listaSocios, rvBandeja, esPerfilTrabajador)
                         }
-                        startActivity(intent)
+                    }.addOnFailureListener {
+                        procesados++
+                        if (procesados == totalDocumentos) actualizarAdapter(listaSocios, rvBandeja, esPerfilTrabajador)
                     }
-                    rvBandeja.adapter = bandejaAdapter
-                } else {
-                    bandejaAdapter.actualizarLista(listaSocios)
                 }
             }
         }
     }
 
+    private fun actualizarAdapter(lista: List<Socio>, rv: RecyclerView, esTrabajador: Boolean) {
+
+        if (!::bandejaAdapter.isInitialized) {
+            bandejaAdapter = SocioAdapter(lista.toMutableList()) { socio ->
+
+                val intent = Intent(this, NegociacionActivity::class.java).apply {
+                    putExtra("CHAT_ID", socio.id)
+                    putExtra("RECEPTOR_ID", socio.receptorId)
+                    putExtra("ES_TRABAJADOR", esTrabajador)
+                    putExtra("SOCIO_NOMBRE", socio.nombre)
+                }
+                startActivity(intent)
+            }
+            rv.adapter = bandejaAdapter
+        } else {
+            bandejaAdapter.actualizarLista(lista)
+        }
+    }
+
     private fun actualizarDisponibilidad(disponible: Boolean, switch: SwitchCompat) {
+
         val uid = auth.currentUser?.uid ?: return
         if (disponible) {
             val googleApiAvailability = GoogleApiAvailability.getInstance()
             val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
+
             if (resultCode != ConnectionResult.SUCCESS) {
                 switch.isChecked = false
                 googleApiAvailability.makeGooglePlayServicesAvailable(this)
@@ -183,12 +212,14 @@ class MainActivity : AppCompatActivity() {
                 requestLocationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                 return
             }
+
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 val updates = mutableMapOf<String, Any>("disponible" to true)
                 if (location != null) {
                     updates["latitud"] = location.latitude
                     updates["longitud"] = location.longitude
                 }
+
                 db.collection("usuarios").document(uid).update(updates).addOnSuccessListener { switch.text = "Disponible" }
             }
         } else {
@@ -197,6 +228,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
+
         findViewById<CardView>(R.id.btnWashApp)?.setOnClickListener { abrirServicio("Lavandería") }
         findViewById<CardView>(R.id.btnCleanHome)?.setOnClickListener { abrirServicio("Limpieza") }
         findViewById<CardView>(R.id.btnFixIt)?.setOnClickListener { abrirServicio("Gasfitero") }
@@ -207,7 +239,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<CardView>(R.id.btnJardineria)?.setOnClickListener { abrirServicio("Jardinería") }
         findViewById<CardView>(R.id.btnTecnicoPC)?.setOnClickListener { abrirServicio("Técnico") }
         findViewById<CardView>(R.id.btnSoporteTecnico)?.setOnClickListener { abrirServicio("Soporte Técnico") }
-
         findViewById<ImageButton>(R.id.btnIrAPerfil)?.setOnClickListener { startActivity(
             Intent(
                 this,
@@ -219,6 +250,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun abrirServicio(nombreCategoria: String) {
+
         val intent = Intent(this, ListadoTrabajadoresActivity::class.java)
         intent.putExtra("CATEGORIA_SELECCIONADA", nombreCategoria)
         startActivity(intent)

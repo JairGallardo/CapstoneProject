@@ -8,12 +8,7 @@ import android.provider.MediaStore
 import android.util.Base64
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.RadioGroup
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -33,7 +28,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayOutputStream
 import androidx.appcompat.app.AlertDialog
-import com.example.domingo.ui.FinalizarServicioActivity
 
 class NegociacionActivity : AppCompatActivity() {
 
@@ -96,6 +90,7 @@ class NegociacionActivity : AppCompatActivity() {
         val btnEnviarMensaje = findViewById<ImageButton>(R.id.btnEnviarMensaje)
         val btnAsistenteIA = findViewById<ImageButton>(R.id.btnAsistenteIA)
         val btnEliminarChat = findViewById<ImageButton>(R.id.btnEliminarChatCompleto)
+
         btnEliminarChat?.setOnClickListener {
             mostrarDialogoCancelarNegociacion()
         }
@@ -133,6 +128,54 @@ class NegociacionActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupRecyclerView() {
+        val miId = auth.currentUser?.uid ?: ""
+
+        adapter = ChatAdapter(
+            miId,
+            esTrabajador,
+            { mensaje, nuevoEstado -> actualizarEstadoOferta(mensaje, nuevoEstado) },
+            { mensaje -> mostrarDialogoEliminar(mensaje) },
+            { mensaje -> mostrarConfirmacionFinTrabajo(mensaje) },
+            { mensaje -> abrirPantallaDePago(mensaje) }
+        )
+
+        findViewById<RecyclerView>(R.id.rvChatNegociacion).apply {
+            layoutManager = LinearLayoutManager(this@NegociacionActivity)
+            adapter = this@NegociacionActivity.adapter
+        }
+    }
+
+    private fun mostrarConfirmacionFinTrabajo(mensaje: Mensaje) {
+        AlertDialog.Builder(this)
+            .setTitle("¿Terminaste el trabajo?")
+            .setMessage("Se notificará al cliente para que proceda con el pago.")
+            .setPositiveButton("Sí, terminar") { _, _ ->
+                enviarMensaje("🏁 TRABAJO TERMINADO. Esperando pago.", "FIN_TRABAJO")
+            }
+            .setNegativeButton("Aún no", null)
+            .show()
+    }
+
+    private fun abrirPantallaDePago(mensaje: Mensaje) {
+        db.collection("tickets")
+            .whereEqualTo("chatId", chatId)
+            .get()
+            .addOnSuccessListener { docs ->
+                val doc = docs.documents.firstOrNull()
+                if (doc != null) {
+                    val monto = doc.getDouble("costoTotal") ?: 0.0
+                    mostrarDialogoMetodoPago(monto)
+                } else {
+                    Toast.makeText(this, "No se encontró un ticket activo para este chat", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("PAGO_ERROR", "Error al buscar ticket: ${e.message}")
+                Toast.makeText(this, "Error al conectar con la base de datos", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     private fun obtenerEspecialidadReceptor() {
         receptorId?.let { id ->
             db.collection("usuarios").document(id).get()
@@ -164,7 +207,7 @@ class NegociacionActivity : AppCompatActivity() {
     private fun mostrarDialogoCancelarNegociacion() {
         AlertDialog.Builder(this)
             .setTitle("Cancelar Servicio")
-            .setMessage("¿Estás seguro de que deseas cancelar la negociación y borrar todo el historial? Esta acción no se puede deshacer.")
+            .setMessage("¿Estás seguro de que deseas cancelar la negociación y borrar todo el historial?")
             .setPositiveButton("Sí, cancelar") { _, _ ->
                 borrarNegociacionCompleta()
             }
@@ -174,11 +217,7 @@ class NegociacionActivity : AppCompatActivity() {
 
     private fun borrarNegociacionCompleta() {
         val idChat = chatId ?: return
-
-        val updates = mapOf(
-            "activo" to false,
-            "ultimoMensaje" to "Trato cancelado"
-        )
+        val updates = mapOf("activo" to false, "ultimoMensaje" to "Trato cancelado")
 
         db.collection("negociaciones").document(idChat)
             .update(updates)
@@ -194,11 +233,8 @@ class NegociacionActivity : AppCompatActivity() {
                         }
                     }
             }
-            .addOnFailureListener { e ->
-                Log.e("DELETE_ERROR", "Error: ${e.message}")
-                Toast.makeText(this, "No se pudo cancelar el trato", Toast.LENGTH_SHORT).show()
-            }
     }
+
     private fun ejecutarConsultaIA(prompt: String, bitmap: Bitmap? = null) {
         val esVision = bitmap != null
         val modelo = if (esVision) "llama-3.2-11b-vision-preview" else "llama3-8b-8192"
@@ -248,21 +284,6 @@ class NegociacionActivity : AppCompatActivity() {
         return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
     }
 
-    private fun setupRecyclerView() {
-        val miId = auth.currentUser?.uid ?: ""
-
-        adapter = ChatAdapter(
-            miId,
-            esTrabajador,
-            { mensaje, nuevoEstado -> actualizarEstadoOferta(mensaje, nuevoEstado) },
-            { mensaje -> mostrarDialogoEliminar(mensaje) }
-        )
-
-        findViewById<RecyclerView>(R.id.rvChatNegociacion).apply {
-            layoutManager = LinearLayoutManager(this@NegociacionActivity)
-            adapter = this@NegociacionActivity.adapter
-        }
-    }
     private fun mostrarDialogoEliminar(mensaje: Mensaje) {
         AlertDialog.Builder(this)
             .setTitle("Eliminar mensaje")
@@ -283,28 +304,38 @@ class NegociacionActivity : AppCompatActivity() {
 
     private fun enviarMensaje(contenido: String, tipo: String, monto: Double? = null) {
         val uid = auth.currentUser?.uid ?: return
-        val nombreSocio = intent.getStringExtra("SOCIO_NOMBRE") ?: "Socio"
+        val nombreSocioChat = intent.getStringExtra("SOCIO_NOMBRE") ?: "Socio"
 
-        val updatesRaiz = hashMapOf<String, Any>(
-            "ultimoMensaje" to contenido,
-            "timestamp" to System.currentTimeMillis(),
-            "activo" to true
-        )
+        db.collection("usuarios").document(uid).get().addOnSuccessListener { miDoc ->
+            val miNombre = miDoc.getString("nombre") ?: "Usuario"
+            val miFoto = miDoc.getString("fotoPerfilB64") ?: ""
 
-        db.collection("negociaciones").document(chatId!!)
-            .update(updatesRaiz)
-            .addOnFailureListener {
-                val dataInicial = hashMapOf(
-                    "clienteId" to if (esTrabajador) receptorId ?: "" else uid,
-                    "trabajadorId" to if (esTrabajador) uid else (receptorId ?: ""),
-                    "ultimoMensaje" to contenido,
-                    "timestamp" to System.currentTimeMillis(),
-                    "nombreCliente" to "Usuario DominGO",
-                    "nombreTrabajador" to if (esTrabajador) "Yo" else nombreSocio,
-                    "activo" to true
-                )
-                db.collection("negociaciones").document(chatId!!).set(dataInicial)
+            receptorId?.let { rId ->
+                db.collection("usuarios").document(rId).get().addOnSuccessListener { receptorDoc ->
+                    val nombreReceptor = receptorDoc.getString("nombre") ?: nombreSocioChat
+                    val fotoReceptor = receptorDoc.getString("fotoPerfilB64") ?: ""
+
+                    val nombreCliente = if (esTrabajador) nombreReceptor else miNombre
+                    val nombreTrabajador = if (esTrabajador) miNombre else nombreReceptor
+                    val fotoCliente = if (esTrabajador) fotoReceptor else miFoto
+                    val fotoTrabajador = if (esTrabajador) miFoto else fotoReceptor
+
+                    val dataNegociacion = hashMapOf(
+                        "clienteId" to if (esTrabajador) rId else uid,
+                        "trabajadorId" to if (esTrabajador) uid else rId,
+                        "nombreCliente" to nombreCliente,
+                        "nombreTrabajador" to nombreTrabajador,
+                        "fotoClienteB64" to fotoCliente,
+                        "fotoTrabajadorB64" to fotoTrabajador,
+                        "ultimoMensaje" to contenido,
+                        "timestamp" to System.currentTimeMillis(),
+                        "activo" to true
+                    )
+
+                    db.collection("negociaciones").document(chatId!!).set(dataNegociacion, com.google.firebase.firestore.SetOptions.merge())
+                }
             }
+        }
 
         val mensaje = hashMapOf(
             "emisorId" to uid,
@@ -318,52 +349,75 @@ class NegociacionActivity : AppCompatActivity() {
     }
 
     private fun escucharMensajes() {
-        val btnIrAPagar = findViewById<Button>(R.id.btnIrAPagar)
-        val btnContinuarProceso = findViewById<Button>(R.id.btnContinuarProceso)
-
         db.collection("negociaciones").document(chatId!!)
             .collection("mensajes")
             .orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null) {
                     val lista = snapshot.toObjects(Mensaje::class.java)
-                    adapter.actualizarMensajes(lista)
 
-                    val ofertaAceptada = lista.find { it.tipo == "OFERTA" && it.estadoOferta == "ACEPTADO" }
+                    val layoutOferta = findViewById<View>(R.id.layoutOferta)
+                    val btnContinuar = findViewById<Button>(R.id.btnContinuarProceso)
 
-                    if (ofertaAceptada != null) {
-                        if (!esTrabajador) {
-                            btnContinuarProceso.visibility = View.VISIBLE
-                            btnContinuarProceso.text = "CONTINUAR PROCESO S/ ${String.format("%.2f", ofertaAceptada.montoOferta)}"
-                            btnContinuarProceso.setOnClickListener {
-                                val intentTicket = Intent(this, TicketClienteActivity::class.java).apply {
-                                    putExtra("CHAT_ID", chatId)
-                                    putExtra("MONTO_SERVICIO", ofertaAceptada.montoOferta)
-                                    putExtra("TRABAJADOR_ID", receptorId)
-                                    putExtra("SOCIO_NOMBRE", intent.getStringExtra("SOCIO_NOMBRE"))
-                                }
-                                startActivity(intentTicket)
-                            }
-                        } else {
-                            btnIrAPagar.visibility = View.GONE
-                            btnContinuarProceso.visibility = View.GONE
+                    gestionarVisibilidadPaneles(lista, layoutOferta, btnContinuar)
+                    val pagoConfirmado = lista.find { it.tipo == "PAGO_REALIZADO" && it.estadoOferta == "PAGO_CONFIRMADO" }
+
+                    if (pagoConfirmado != null && !esTrabajador) {
+                        val contenido = pagoConfirmado.contenido
+                        val metodoDetectado = when {
+                            contenido.contains("Yape", ignoreCase = true) -> "Yape"
+                            contenido.contains("Plin", ignoreCase = true) -> "Plin"
+                            contenido.contains("Efectivo", ignoreCase = true) -> "Efectivo"
+                            else -> "Otro"
                         }
-                    } else {
-                        btnIrAPagar.visibility = View.GONE
-                        btnContinuarProceso.visibility = View.GONE
+
+                        val intentFinal = Intent(this, FinalizarServicioActivity::class.java).apply {
+                            putExtra("MONTO_FINAL", pagoConfirmado.montoOferta)
+                            putExtra("SOCIO_NOMBRE", intent.getStringExtra("SOCIO_NOMBRE"))
+                            putExtra("METODO_PAGO", metodoDetectado)
+                            putExtra("RECEPTOR_ID", receptorId)
+                            putExtra("CHAT_ID", chatId)
+                        }
+                        startActivity(intentFinal)
+                        finish()
                     }
 
-                    if (lista.isNotEmpty()) {
-                        findViewById<RecyclerView>(R.id.rvChatNegociacion).scrollToPosition(lista.size - 1)
-                    }
+                    adapter.actualizarMensajes(lista)
                 }
             }
     }
 
+    private fun gestionarVisibilidadPaneles(lista: List<Mensaje>, layoutOferta: View, btnContinuar: Button) {
+        val existeAlgunaOferta = lista.any { it.tipo == "OFERTA" }
+        val ofertaAceptada = lista.find { it.tipo == "OFERTA" && it.estadoOferta == "ACEPTADO" }
+        val ticketYaGenerado = lista.any { it.tipo == "TICKET" }
+
+        if (esTrabajador) {
+            layoutOferta.visibility = if (ticketYaGenerado) View.GONE else View.VISIBLE
+        } else {
+            layoutOferta.visibility = if (existeAlgunaOferta && !ticketYaGenerado) View.VISIBLE else View.GONE
+        }
+
+        if (ofertaAceptada != null && !esTrabajador && !ticketYaGenerado) {
+            btnContinuar.visibility = View.VISIBLE
+            btnContinuar.text = "GENERAR TICKET S/ ${String.format("%.2f", ofertaAceptada.montoOferta)}"
+
+            btnContinuar.setOnClickListener {
+                val intentTicket = Intent(this, TicketClienteActivity::class.java).apply {
+                    putExtra("CHAT_ID", chatId)
+                    putExtra("MONTO_SERVICIO", ofertaAceptada.montoOferta)
+                    putExtra("TRABAJADOR_ID", receptorId)
+                    putExtra("SOCIO_NOMBRE", intent.getStringExtra("SOCIO_NOMBRE"))
+                }
+                startActivity(intentTicket)
+            }
+        } else {
+            btnContinuar.visibility = View.GONE
+        }
+    }
+
     private fun actualizarEstadoOferta(mensaje: Mensaje, nuevoEstado: String) {
         if (chatId == null) return
-
-        // Buscamos el documento del mensaje específico
         db.collection("negociaciones").document(chatId!!)
             .collection("mensajes")
             .whereEqualTo("timestamp", mensaje.timestamp)
@@ -372,18 +426,11 @@ class NegociacionActivity : AppCompatActivity() {
                 for (doc in docs) {
                     doc.reference.update("estadoOferta", nuevoEstado)
                         .addOnSuccessListener {
-                            val accion = if (nuevoEstado == "ACEPTADO") "aceptada" else "rechazada"
-                            Toast.makeText(this, "Oferta $accion", Toast.LENGTH_SHORT).show()
-
-                            // Si el trabajador acepta, enviamos un aviso automático al chat
                             if (nuevoEstado == "ACEPTADO" && esTrabajador) {
                                 enviarMensaje("✅ He aceptado la oferta. ¡Estoy listo para iniciar!", "TEXTO")
                             }
                         }
                 }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error al actualizar oferta", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -393,8 +440,58 @@ class NegociacionActivity : AppCompatActivity() {
         builder.setView(view)
 
         val dialog = builder.create()
+
         val rgMetodos = view.findViewById<RadioGroup>(R.id.rgMetodosPago)
+        val layoutDetalles = view.findViewById<LinearLayout>(R.id.layoutDetallesPago)
+        val tvNombre = view.findViewById<TextView>(R.id.tvNombreTitular)
+        val tvCelular = view.findViewById<TextView>(R.id.tvCelularPago)
+        val ivQrPago = view.findViewById<ImageView>(R.id.ivQrPago)
         val btnConfirmar = view.findViewById<Button>(R.id.btnConfirmarPago)
+
+        var qrYapeRecuperado: String? = null
+        var qrPlinRecuperado: String? = null
+
+        receptorId?.let { id ->
+            db.collection("usuarios").document(id).get()
+                .addOnSuccessListener { doc ->
+                    val nombre = doc.getString("nombre") ?: "Sin nombre"
+                    val celular = doc.getString("telefono") ?: "Sin número"
+
+                    qrYapeRecuperado = doc.getString("qrYapeB64")
+                    qrPlinRecuperado = doc.getString("qrPlinB64")
+
+                    tvNombre.text = "Titular: $nombre"
+                    tvCelular.text = "Número: $celular"
+
+                    if (!qrYapeRecuperado.isNullOrEmpty()) {
+                        mostrarImagenBase64(qrYapeRecuperado!!, ivQrPago)
+                    }
+                }
+        }
+
+        rgMetodos.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rbYape -> {
+                    layoutDetalles.visibility = View.VISIBLE
+                    if (!qrYapeRecuperado.isNullOrEmpty()) {
+                        mostrarImagenBase64(qrYapeRecuperado!!, ivQrPago)
+                    } else {
+                        ivQrPago.setImageResource(android.R.drawable.ic_menu_gallery)
+                    }
+                }
+                R.id.rbPlin -> {
+                    layoutDetalles.visibility = View.VISIBLE
+                    if (!qrPlinRecuperado.isNullOrEmpty()) {
+                        mostrarImagenBase64(qrPlinRecuperado!!, ivQrPago)
+                    } else {
+                        ivQrPago.setImageResource(android.R.drawable.ic_menu_gallery)
+                    }
+                }
+                else -> {
+                    layoutDetalles.visibility = View.GONE
+                }
+            }
+        }
 
         btnConfirmar.setOnClickListener {
             val seleccionadoId = rgMetodos.checkedRadioButtonId
@@ -406,19 +503,33 @@ class NegociacionActivity : AppCompatActivity() {
             val metodo = when (seleccionadoId) {
                 R.id.rbYape -> "Yape"
                 R.id.rbPlin -> "Plin"
-                R.id.rbEfectivo -> "Efectivo"
                 else -> "Efectivo"
             }
 
-            val intentFinalizar = Intent(this, FinalizarServicioActivity::class.java).apply {
-                putExtra("MONTO_FINAL", monto)
-                putExtra("METODO_PAGO", metodo)
-                putExtra("RECEPTOR_ID", receptorId)
-                putExtra("SOCIO_NOMBRE", intent.getStringExtra("SOCIO_NOMBRE"))
-            }
-            startActivity(intentFinalizar)
+            enviarMensaje("📱 He enviado el pago por $metodo. Esperando confirmación...", "PAGO_REALIZADO", monto)
             dialog.dismiss()
+            mostrarPantallaEsperaPago(monto, metodo)
         }
         dialog.show()
+    }
+
+    private fun mostrarImagenBase64(base64String: String, imageView: ImageView) {
+        try {
+            val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+            val decodedByte = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+            imageView.setImageBitmap(decodedByte)
+        } catch (e: Exception) {
+            Log.e("ERROR_IMAGE", "Error al decodificar Base64: ${e.message}")
+        }
+    }
+
+    private fun mostrarPantallaEsperaPago(monto: Double, metodo: String) {
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
+        val view = layoutInflater.inflate(R.layout.layout_esperando_confirmacion, null)
+        builder.setView(view)
+        builder.setCancelable(false)
+        val dialogEspera = builder.create()
+        dialogEspera.show()
+
     }
 }

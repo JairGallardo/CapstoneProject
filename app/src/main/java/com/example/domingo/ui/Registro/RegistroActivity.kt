@@ -8,11 +8,12 @@ import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.domingo.ui.MainActivity
 import com.example.domingo.R
 import com.example.domingo.VerificarSocioActivity
+import com.example.domingo.ui.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.jvm.java
 
 class RegistroActivity : AppCompatActivity() {
 

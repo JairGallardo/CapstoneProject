@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.example.domingo.model.Socio
 import com.example.domingo.ui.NegociacionActivity
+import com.example.domingo.ui.PerfilActivity
 import java.util.Locale
 
 class SocioAdapter(
@@ -22,6 +23,7 @@ class SocioAdapter(
 ) : RecyclerView.Adapter<SocioAdapter.SocioViewHolder>() {
 
     class SocioViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+
         val foto: ImageView = view.findViewById(R.id.ivFotoSocio)
         val nombre: TextView = view.findViewById(R.id.tvNombreSocio)
         val rating: TextView = view.findViewById(R.id.tvRating)
@@ -39,9 +41,11 @@ class SocioAdapter(
     override fun onBindViewHolder(holder: SocioViewHolder, position: Int) {
         val socio = listaSocios[position]
 
-        holder.nombre.text = socio.nombre
+        holder.nombre.text = socio.nombre.ifEmpty {
+            if (socio.descripcion.isNotEmpty()) "Cliente" else "Trabajador"
+        }
 
-        if (socio.trabajosRealizados == 0) {
+        if (socio.trabajosRealizados == 0 && socio.rating == 0.0) {
             holder.rating.text = "Nuevo (Sin trabajos)"
             holder.rating.setTextColor(holder.itemView.context.getColor(android.R.color.holo_blue_dark))
         } else {
@@ -52,18 +56,24 @@ class SocioAdapter(
         holder.precio.text = String.format(Locale.getDefault(), "Total: S/ %.2f", socio.tarifaSugerida)
         holder.distancia.text = String.format(Locale.getDefault(), "A %.1f km de ti", socio.distancia)
 
-        if (!socio.fotoPerfilB64.isNullOrEmpty()) {
+        if (!socio.fotoPerfilB64.isNullOrBlank()) {
             try {
                 val imageBytes = Base64.decode(socio.fotoPerfilB64, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                holder.foto.setImageBitmap(bitmap)
+
+                if (bitmap != null) {
+                    holder.foto.setImageBitmap(bitmap)
+                } else {
+                    holder.foto.setImageResource(R.drawable.ic_food)
+                }
             } catch (e: Exception) {
-                Log.e("SocioAdapter", "Error decodificando foto: ${e.message}")
+                Log.e("SocioAdapter", "Error decodificando foto de ${socio.nombre}: ${e.message}")
                 holder.foto.setImageResource(R.drawable.ic_food)
             }
         } else {
             holder.foto.setImageResource(R.drawable.ic_food)
         }
+
         if (socio.descripcion.isNotEmpty()) {
             holder.precio.text = socio.descripcion
             holder.btnNegociar.text = "Abrir Chat"
@@ -71,6 +81,15 @@ class SocioAdapter(
         } else {
             holder.btnNegociar.text = "Ofertar"
             holder.distancia.visibility = View.VISIBLE
+        }
+
+        holder.foto.setOnClickListener {
+            val intent = Intent(holder.itemView.context, PerfilActivity::class.java).apply {
+
+                val idVer = if (socio.receptorId.isNullOrEmpty()) socio.id else socio.receptorId
+                putExtra("VER_USUARIO_ID", idVer)
+            }
+            holder.itemView.context.startActivity(intent)
         }
 
         holder.btnNegociar.setOnClickListener {
@@ -90,12 +109,14 @@ class SocioAdapter(
     override fun getItemCount() = listaSocios.size
 
     fun actualizarLista(nuevaLista: List<Socio>) {
+
         listaSocios.clear()
         listaSocios.addAll(nuevaLista)
         notifyDataSetChanged()
     }
 
     private fun abrirNegociacionDirecto(context: android.content.Context, socio: Socio) {
+
         val intent = Intent(context, NegociacionActivity::class.java).apply {
             putExtra("CHAT_ID", "chat_${socio.id}_${System.currentTimeMillis()}")
             putExtra("RECEPTOR_ID", socio.id)
@@ -106,3 +127,4 @@ class SocioAdapter(
         Toast.makeText(context, "Chat con ${socio.nombre}", Toast.LENGTH_SHORT).show()
     }
 }
+
