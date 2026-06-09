@@ -7,7 +7,10 @@ data class Socio(
     val rating: Double = 0.0,
     val trabajosRealizados: Int = 0,
     val tarifaSugerida: Double = 0.0,
-    val distancia: Double = 0.0,
     val descripcion: String = "",
-    val receptorId: String = ""
+    val descripcionesPorCategoria: Map<String, String> = emptyMap(),
+    val receptorId: String = "",
+    val categorias: List<String> = emptyList(),
+    val activo: Boolean = true,
+    val ultimoEmisorId: String = ""
 )

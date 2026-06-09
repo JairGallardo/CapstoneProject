@@ -59,15 +59,16 @@
                 android:textColor="@color/blue_confidence"
                 android:textStyle="bold"
                 android:layout_marginTop="2dp" />
-
             <TextView
-                android:id="@+id/tvPrecioBase"
-                android:layout_width="wrap_content"
+                android:id="@+id/tvDescripcionDinamica"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:textSize="15sp"
-                android:textColor="#2E7D32"
-                android:textStyle="bold" />
+                android:textSize="13sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textColor="#616161"
+                android:layout_marginTop="4dp"
+                android:fontStyle="italic" />
 
         </LinearLayout>
 

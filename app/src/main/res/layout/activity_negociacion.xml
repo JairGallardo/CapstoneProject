@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F7F8"
-    tools:context=".ui.NegociacionActivity">
+    tools:context=".ui.negociacion.NegociacionActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbarNegociacion"
@@ -150,12 +150,13 @@
 
                 <ImageButton
                     android:id="@+id/btnAsistenteIA"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    android:src="@android:drawable/ic_menu_help"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="@color/blue_confidence"
-                    android:contentDescription="Asistente de IA" />
+                    android:contentDescription="Asistente IA"
+                    android:src="@android:drawable/ic_menu_camera"
+                    android:visibility="gone"
+                    app:tint="@color/blue_confidence" />
 
                 <EditText
                     android:id="@+id/etMensajeChat"

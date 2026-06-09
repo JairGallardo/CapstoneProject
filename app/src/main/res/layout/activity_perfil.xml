@@ -11,7 +11,6 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- CABECERA: FOTO ESTILO WHATSAPP -->
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -44,7 +43,6 @@
                 android:elevation="6dp" />
         </FrameLayout>
 
-        <!-- SECCIÓN 1: DATOS PERSONALES (Actualizada con etiquetas) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -70,7 +68,6 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- NOMBRE -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -89,7 +86,6 @@
 
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
 
-                    <!-- CORREO -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -107,7 +103,6 @@
 
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
 
-                    <!-- TELÉFONO CON BOTÓN DE LLAMADA -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -147,7 +142,6 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- SECCIÓN 2: PORTAFOLIO Y OFERTA -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardPortafolio"
             android:layout_width="match_parent"
@@ -183,15 +177,65 @@
                         android:minHeight="100dp"
                         android:layout_marginTop="8dp"/>
 
-                    <Button android:id="@+id/btnSeleccionarCategorias" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Especialidades" android:layout_marginTop="12dp"/>
-                    <TextView android:id="@+id/tvCategoriasSeleccionadas" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Ninguna seleccionada" android:padding="8dp" android:textStyle="italic"/>
+                    <LinearLayout
+                        android:id="@+id/layoutDescripcionCategoriaLectura"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone">
+                        <TextView
+                            android:id="@+id/tvTituloDescCategoria"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Descripción de la Especialidad:"
+                            android:textStyle="bold"
+                            android:textColor="@color/black"/>
+                        <TextView
+                            android:id="@+id/tvContenidoDescCategoria"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Sin descripción para esta especialidad."
+                            android:textColor="#333333"
+                            android:textSize="15sp"/>
+                    </LinearLayout>
 
-                    <EditText android:id="@+id/etDescripcionPerfil" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Descripción de tu servicio" android:lines="3" android:gravity="top" android:inputType="textMultiLine" android:layout_marginTop="8dp"/>
+                    <Button
+                        android:id="@+id/btnSeleccionarCategorias"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Especialidades"
+                        android:layout_marginTop="12dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/containerEspecialidades"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:background="#F0F4F8"
+                        android:padding="8dp"
+                        android:layout_marginTop="8dp">
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvEspecialidadesOculto"
+                            android:layout_width="match_parent"
+                            android:layout_height="250dp"
+                            android:background="#FFFFFF" />
+
+                        <Button
+                            android:id="@+id/btnHechoEspecialidades"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Guardar Especialidades"
+                            android:layout_marginTop="8dp" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- SECCIÓN 3: QR DE PAGO -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardMetodoPago"
             android:layout_width="match_parent"
@@ -224,6 +268,42 @@
                     </RadioGroup>
                     <ImageView android:id="@+id/ivQrActual" android:layout_width="200dp" android:layout_height="200dp" android:src="@android:drawable/ic_menu_gallery" android:layout_marginTop="10dp" android:scaleType="fitCenter"/>
                     <Button android:id="@+id/btnActualizarQR" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="CAMBIAR IMAGEN QR" android:layout_marginTop="12dp" android:backgroundTint="@color/blue_confidence"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardCalificaciones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="12dp"
+            android:visibility="gone">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/headerCalificaciones"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="▶ Calificaciones y Reseñas"
+                    android:padding="16dp"
+                    android:textStyle="bold"/>
+                <LinearLayout
+                    android:id="@+id/containerCalificaciones"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvCalificaciones"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:minHeight="50dp"/>
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
