@@ -39,6 +39,8 @@ class FinalizarServicioActivity : AppCompatActivity() {
     private var metodoPago: String = "Efectivo"
     private var chatId: String? = null
 
+    private lateinit var btnTerminar: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_finalizar_servicio)
@@ -67,7 +69,7 @@ class FinalizarServicioActivity : AppCompatActivity() {
         val rbCalificacion = findViewById<RatingBar>(R.id.rbCalificacion)
         val etComentario = findViewById<EditText>(R.id.etComentarioFeedback)
         val btnVoucher = findViewById<Button>(R.id.btnDescargarVoucher)
-        val btnTerminar = findViewById<Button>(R.id.btnTerminarVolver)
+        btnTerminar = findViewById(R.id.btnTerminarVolver)
 
         etComentario.hint = "¿Cómo fue tu experiencia con $nombreOtraPersona?"
 
@@ -82,6 +84,8 @@ class FinalizarServicioActivity : AppCompatActivity() {
             val comentario = etComentario.text.toString().trim()
 
             if (calificacion > 0) {
+                btnTerminar.isEnabled = false
+
                 viewModel.guardarFeedbackYFinalizar(
                     chatId = chatId ?: "",
                     trabajadorId = trabajadorId,
@@ -119,6 +123,7 @@ class FinalizarServicioActivity : AppCompatActivity() {
                 startActivity(intent)
                 finish()
             } else {
+                btnTerminar.isEnabled = true
                 Toast.makeText(this, mensaje, Toast.LENGTH_SHORT).show()
             }
         }

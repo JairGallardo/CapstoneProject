@@ -4,7 +4,6 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <!-- Imagen expandida (ocupa todo el espacio) -->
     <ImageView
         android:id="@+id/ivImagenExpandida"
         android:layout_width="match_parent"
@@ -12,7 +11,6 @@
         android:scaleType="fitCenter"
         android:adjustViewBounds="true" />
 
-    <!-- Botón cerrar arriba a la derecha -->
     <ImageButton
         android:id="@+id/btnCerrarImagenExpandida"
         android:layout_width="44dp"
@@ -25,7 +23,6 @@
         app:tint="@android:color/white"
         xmlns:app="http://schemas.android.com/apk/res-auto" />
 
-    <!-- Botón descargar abajo centrado -->
     <Button
         android:id="@+id/btnDescargarImagen"
         android:layout_width="wrap_content"

@@ -48,12 +48,15 @@ class NegociacionViewModel(application: Application) : AndroidViewModel(applicat
     private val _resultadoIA = MutableLiveData<ResultadoIA?>()
     val resultadoIA: LiveData<ResultadoIA?> get() = _resultadoIA
 
+    private val _categoriaServicio = MutableLiveData<String>()
+    val categoriaServicio: LiveData<String> get() = _categoriaServicio
+
     fun limpiarResultadoIA() { _resultadoIA.value = null }
 
-    private val GROQ_API_KEY  = "TU_GROQ_API_KEY"
+    private val GROQ_API_KEY  = ""
     private val GROQ_MODEL    = "meta-llama/llama-4-scout-17b-16e-instruct"
-    private val CF_ACCOUNT_ID = "TU_CF_ACCOUNT_ID"
-    private val CF_API_TOKEN  = "TU_CF_API_TOKEN"
+    private val CF_ACCOUNT_ID = ""
+    private val CF_API_TOKEN  = ""
 
     init {
         repository.guardarFcmTokenActual()
@@ -66,6 +69,12 @@ class NegociacionViewModel(application: Application) : AndroidViewModel(applicat
             repository.obtenerDatosUsuario(it) { doc ->
                 _especialidadReceptor.value = doc.getString("especialidad") ?: "General"
             }
+        }
+    }
+
+    fun cargarCategoriaServicio(chatId: String) {
+        repository.obtenerDatosNegociacion(chatId) { doc ->
+            _categoriaServicio.value = doc.getString("categoria") ?: "General"
         }
     }
 
@@ -122,7 +131,8 @@ class NegociacionViewModel(application: Application) : AndroidViewModel(applicat
             cuerpo               = cuerpo,
             chatId               = chatId,
             esTrabajadorReceptor = !esTrabajador,
-            nombreSocio          = nombreSocioDefault
+            nombreSocio          = nombreSocioDefault,
+            tipo                 = "CHAT"
         )
     }
 
@@ -194,7 +204,8 @@ class NegociacionViewModel(application: Application) : AndroidViewModel(applicat
             cuerpo               = "Te enviaron una imagen",
             chatId               = chatId,
             esTrabajadorReceptor = !esTrabajador,
-            nombreSocio          = nombreSocioDefault
+            nombreSocio          = nombreSocioDefault,
+            tipo                 = "CHAT"
         )
     }
 
@@ -317,7 +328,8 @@ class NegociacionViewModel(application: Application) : AndroidViewModel(applicat
             cuerpo               = "El cliente envió una propuesta con IA",
             chatId               = chatId,
             esTrabajadorReceptor = !esTrabajador,
-            nombreSocio          = nombreSocioDefault
+            nombreSocio          = nombreSocioDefault,
+            tipo                 = "CHAT"
         )
     }
 
@@ -392,7 +404,8 @@ class NegociacionViewModel(application: Application) : AndroidViewModel(applicat
                         cuerpo               = cuerpoPenalizacion,
                         chatId               = chatId,
                         esTrabajadorReceptor = esTrabajadorPenalizado,
-                        nombreSocio          = nombreSocioDefault
+                        nombreSocio          = nombreSocioDefault,
+                        tipo                 = "SISTEMA"
                     )
                     _chatCancelado.value = true
                 } else {

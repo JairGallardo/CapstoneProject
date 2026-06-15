@@ -16,7 +16,6 @@
         android:textColor="#1565C0"
         android:layout_marginBottom="14dp" />
 
-    <!-- Preview de la imagen cargada -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="220dp"

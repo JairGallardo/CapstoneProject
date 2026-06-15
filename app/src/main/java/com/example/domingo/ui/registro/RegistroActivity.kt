@@ -26,11 +26,13 @@ class RegistroActivity : AppCompatActivity() {
         supportActionBar?.title = "Crear Cuenta"
 
         val btnRegistrar = findViewById<Button>(R.id.btnRegistrar)
+
         val etNombre = findViewById<EditText>(R.id.etNombre)
         val etCorreo = findViewById<EditText>(R.id.etCorreo)
         val etPass = findViewById<EditText>(R.id.etPassword)
         val etTelefono = findViewById<EditText>(R.id.etTelefono)
         val rbTrabajador = findViewById<RadioButton>(R.id.rbTrabajador)
+        val cbTerminos = findViewById<android.widget.CheckBox>(R.id.cbTerminos)
 
         btnRegistrar.setOnClickListener {
             val rol = if (rbTrabajador.isChecked) "trabajador" else "cliente"
@@ -39,7 +41,8 @@ class RegistroActivity : AppCompatActivity() {
                 etCorreo.text.toString().trim(),
                 etPass.text.toString(),
                 etTelefono.text.toString().trim(),
-                rol
+                rol,
+                cbTerminos.isChecked
             )
         }
 

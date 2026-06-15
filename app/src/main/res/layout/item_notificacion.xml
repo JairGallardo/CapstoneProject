@@ -7,7 +7,7 @@
     android:layout_marginHorizontal="12dp"
     android:layout_marginVertical="4dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardElevation="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,83 +15,54 @@
         android:orientation="horizontal"
         android:padding="14dp">
 
-        <!-- Ícono del tipo de notificación -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            app:cardCornerRadius="23dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="#E3F2FD">
+        <View
+            android:id="@+id/viewIndicadorNoLeida"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/circle_blue"
+            android:visibility="invisible" />
 
-            <ImageView
-                android:id="@+id/ivIconoNotif"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
-                android:layout_gravity="center"
-                android:src="@android:drawable/ic_popup_reminder"
-                app:tint="@color/blue_confidence" />
-        </androidx.cardview.widget.CardView>
-
-        <!-- Contenido -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="12dp"
             android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:layout_marginBottom="4dp">
 
                 <TextView
-                    android:id="@+id/tvTituloNotif"
+                    android:id="@+id/tvNotifTitulo"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Título de notificación"
                     android:textColor="#212121"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
-                <!-- Punto azul de no leído -->
-                <View
-                    android:id="@+id/viewNoLeido"
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:background="@drawable/badge_background"
-                    android:visibility="gone" />
+                <TextView
+                    android:id="@+id/tvNotifTimestamp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textColor="#9E9E9E"
+                    android:textSize="11sp" />
             </LinearLayout>
 
             <TextView
-                android:id="@+id/tvCuerpoNotif"
+                android:id="@+id/tvNotifCuerpo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Descripción de la notificación"
                 android:textColor="#616161"
                 android:textSize="13sp"
-                android:maxLines="3"
-                android:ellipsize="end" />
+                android:lineSpacingMultiplier="1.3" />
 
-            <TextView
-                android:id="@+id/tvFechaNotif"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Hace 5 min"
-                android:textColor="#9E9E9E"
-                android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
-
-    <!-- Borde izquierdo de color según tipo (se cambia por código) -->
-    <View
-        android:id="@+id/viewBordeColor"
-        android:layout_width="4dp"
-        android:layout_height="match_parent"
-        android:background="@color/blue_confidence" />
 
 </androidx.cardview.widget.CardView>

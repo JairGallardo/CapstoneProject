@@ -43,6 +43,11 @@ class NegociacionRepository(private val context: Context) {
             .addSnapshotListener { snapshot, _ -> snapshot?.let { onCambio(it) } }
     }
 
+    fun obtenerDatosNegociacion(chatId: String, onExito: (DocumentSnapshot) -> Unit) {
+        db.collection("negociaciones").document(chatId).get()
+            .addOnSuccessListener { onExito(it) }
+    }
+
     fun setDatosNegociacionPadre(chatId: String, data: Map<String, Any>) {
         db.collection("negociaciones").document(chatId)
             .update(data)
@@ -175,7 +180,8 @@ class NegociacionRepository(private val context: Context) {
         cuerpo: String,
         chatId: String,
         esTrabajadorReceptor: Boolean,
-        nombreSocio: String
+        nombreSocio: String,
+        tipo: String = "CHAT"
     ) {
         db.collection("usuarios").document(receptorId).get()
             .addOnSuccessListener { doc ->
@@ -203,6 +209,7 @@ class NegociacionRepository(private val context: Context) {
                                     put("chatId",       chatId)
                                     put("esTrabajador", esTrabajadorReceptor.toString())
                                     put("nombreSocio",  nombreSocio)
+                                    put("tipo",         tipo)
                                 })
                             })
                         }

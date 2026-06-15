@@ -44,7 +44,8 @@ class FinalizarServicioViewModel : ViewModel() {
             "trabajadorNombre" to if (miRol == "trabajador") miNombre else nombreOtraPersona,
             "categoria" to categoriaServicio,
             "monto" to montoFinal,
-            "fecha" to System.currentTimeMillis()
+            "fecha" to System.currentTimeMillis(),
+            "rating" to nota
         )
 
         repository.registrarServicioFinalizado(servicioFinalizado,
@@ -54,12 +55,13 @@ class FinalizarServicioViewModel : ViewModel() {
                     "emisorNombre" to miNombre,
                     "puntos" to nota,
                     "comentario" to comentario,
+                    "categoria" to categoriaServicio,
                     "timestamp" to System.currentTimeMillis()
                 )
 
                 repository.guardarResenaUsuario(idReceptorResena, feedback,
                     onSuccess = {
-                        repository.actualizarMetricasUsuario(idReceptorResena, nota,
+                        repository.actualizarMetricasUsuario(idReceptorResena, categoriaServicio, nota,
                             onSuccess = {
                                 val textoCierre = "Servicio finalizado: S/ $montoFinal"
                                 repository.desactivarNegociacionPorId(chatId, textoCierre) { exito ->

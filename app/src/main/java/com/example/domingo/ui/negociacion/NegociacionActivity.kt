@@ -38,6 +38,7 @@ class NegociacionActivity : AppCompatActivity() {
     private var esTrabajador: Boolean = false
     private var nombreSocio: String = "Socio"
     private var modoSoloLectura: Boolean = false
+    private var categoriaServicio: String = "General"
 
     private var bitmapSeleccionado: Bitmap? = null
     private var dialogIAView: View? = null
@@ -77,7 +78,6 @@ class NegociacionActivity : AppCompatActivity() {
             !ActivityCompat.shouldShowRequestPermissionRationale(
                 this, android.Manifest.permission.CAMERA
             ) -> {
-
                 AlertDialog.Builder(this)
                     .setTitle("Permiso de cámara necesario")
                     .setMessage("Debes habilitar el permiso de cámara manualmente desde Ajustes > Aplicaciones > Domingo > Permisos.")
@@ -107,13 +107,46 @@ class NegociacionActivity : AppCompatActivity() {
         esTrabajador  = intent.getBooleanExtra("ES_TRABAJADOR", false)
         nombreSocio   = intent.getStringExtra("SOCIO_NOMBRE") ?: "Socio"
         modoSoloLectura = intent.getBooleanExtra("SOLO_LECTURA", false)
+        categoriaServicio = intent.getStringExtra("CATEGORIA_SERVICIO") ?: "General"
 
-        Log.d("DEBUG_NEGOCIACION", "chatId=$chatId | receptor=$receptorId | trabajador=$esTrabajador")
+        Log.d("DEBUG_NEGOCIACION", "chatId=$chatId | receptor=$receptorId | trabajador=$esTrabajador | categoria=$categoriaServicio")
 
         findViewById<TextView>(R.id.tvNombreChat).text = nombreSocio
 
+        receptorId?.let { uid ->
+            FirebaseFirestore.getInstance()
+                .collection("usuarios").document(uid).get()
+                .addOnSuccessListener { doc ->
+                    val especialidad  = doc.getString("especialidad") ?: ""
+                    val disponible    = doc.getBoolean("disponible") ?: false
+                    val desactivado   = doc.getBoolean("desactivado") ?: false
+
+                    val textoEstado = when {
+                        desactivado          -> "⚫ No disponible"
+                        especialidad.isNotEmpty() -> especialidad
+                        disponible           -> "🟢 En línea"
+                        else                 -> "⚫ No disponible"
+                    }
+
+                    findViewById<TextView>(R.id.tvEspecialidadChat)?.text = textoEstado
+
+                    val fotoB64 = doc.getString("fotoPerfilB64")
+                    if (!fotoB64.isNullOrEmpty()) {
+                        try {
+                            val bytes = android.util.Base64.decode(fotoB64, android.util.Base64.DEFAULT)
+                            val bmp = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            findViewById<android.widget.ImageView>(R.id.ivFotoChat)?.setImageBitmap(bmp)
+                        } catch (e: Exception) { /* placeholder se queda */ }
+                    }
+                }
+        }
+
         setupRecyclerView()
         configurarObservadores()
+
+        if (categoriaServicio == "General") {
+            viewModel.cargarCategoriaServicio(chatId)
+        }
 
         val layoutOferta = findViewById<View>(R.id.layoutOferta)
         val btnContinuar = findViewById<Button>(R.id.btnContinuarProceso)
@@ -172,7 +205,7 @@ class NegociacionActivity : AppCompatActivity() {
                 viewModel.actualizarEstadoOferta(chatId, mensaje, nuevoEstado, receptorId, esTrabajador, nombreSocio)
             },
             onMensajeLongClick = { mensaje -> mostrarDialogoEliminar(mensaje) },
-            onLlegadaClick     = { mensaje ->
+            onLlegadaClick     = { _ ->
                 viewModel.enviarMensajeEstructurado(
                     chatId, "📍 He llegado a tu domicilio.", "LLEGADA_DOMICILIO",
                     null, receptorId, esTrabajador, nombreSocio
@@ -193,6 +226,10 @@ class NegociacionActivity : AppCompatActivity() {
         viewModel.escucharEstadoActivo(chatId)
         viewModel.chatActivoEstado.observe(this) { esActivo ->
             if (!esActivo) congelarChatInterfaz()
+        }
+
+        viewModel.categoriaServicio.observe(this) { categoria ->
+            categoriaServicio = categoria
         }
 
         viewModel.mensajes.observe(this) { lista ->
@@ -218,6 +255,7 @@ class NegociacionActivity : AppCompatActivity() {
                         putExtra("TRABAJADOR_ID", trabajadorIdStr)
                         putExtra("MI_ROL",        miRolStr)
                         putExtra("SOCIO_NOMBRE",  nombreSocio)
+                        putExtra("CATEGORIA_SERVICIO", categoriaServicio)
                         putExtra("METODO_PAGO",   "Digital/Efectivo")
                         putExtra("CHAT_ID",       chatId)
                     })
@@ -581,7 +619,7 @@ class NegociacionActivity : AppCompatActivity() {
                         when (pos) {
                             0 -> viewModel.cancelarServicioConJustificacion(chatId, "El trabajador no se presentó.", receptorId, esTrabajador, nombreSocio, aplicarPenalizacion = true)
                             1 -> viewModel.cancelarServicioConJustificacion(chatId, "El trabajador canceló por chat.", receptorId, esTrabajador, nombreSocio, aplicarPenalizacion = false)
-                            2 -> viewModel.cancelarServicioConJustificacion(chatId, "Cancelación mutua.", receptorId, esTrabajador, nombreSocio, aplicarPenalizacion = false)
+                            2 -> viewModel.cancelarServicioConJustificacion(chatId, "Cambié de opinión (Cancelación mutua).", receptorId, esTrabajador, nombreSocio, aplicarPenalizacion = false)
                         }
                     }
                     .setNegativeButton("Volver", null)

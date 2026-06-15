@@ -3,6 +3,7 @@ package com.example.domingo.ui.listadotrabajadores
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
@@ -25,12 +26,12 @@ class SocioAdapter(
 ) : RecyclerView.Adapter<SocioAdapter.SocioViewHolder>() {
 
     class SocioViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val foto: ImageView = view.findViewById(R.id.ivFotoSocio)
-        val nombre: TextView = view.findViewById(R.id.tvNombreSocio)
-        val rating: TextView = view.findViewById(R.id.tvRating)
-        val distancia: TextView = view.findViewById(R.id.tvDistanciaSocio)
+        val foto: ImageView       = view.findViewById(R.id.ivFotoSocio)
+        val nombre: TextView      = view.findViewById(R.id.tvNombreSocio)
+        val rating: TextView      = view.findViewById(R.id.tvRating)
+        val distancia: TextView   = view.findViewById(R.id.tvDistanciaSocio)
         val descripcion: TextView = view.findViewById(R.id.tvDescripcionDinamica)
-        val btnNegociar: Button = view.findViewById(R.id.btnNegociar)
+        val btnNegociar: Button   = view.findViewById(R.id.btnNegociar)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SocioViewHolder {
@@ -42,58 +43,80 @@ class SocioAdapter(
     override fun onBindViewHolder(holder: SocioViewHolder, position: Int) {
         val socio = listaSocios[position]
 
-        holder.nombre.text = socio.nombre.ifEmpty {
-            if (socio.descripcion.isNotEmpty()) "Cliente" else "Trabajador"
-        }
+        holder.nombre.text = socio.nombre.ifEmpty { "Trabajador" }
 
-        if (!socio.descripcion.isNullOrEmpty()) {
-            holder.descripcion.text = socio.descripcion
+        val esBandeja = categoriaActual == null
+
+        if (socio.descripcion.isNotEmpty()) {
+            holder.descripcion.text       = socio.descripcion
             holder.descripcion.visibility = View.VISIBLE
         } else {
             holder.descripcion.visibility = View.GONE
         }
 
-        if (socio.trabajosRealizados == 0 && socio.rating == 0.0) {
-            holder.rating.text = "Nuevo (Sin trabajos)"
-            holder.rating.setTextColor(holder.itemView.context.getColor(android.R.color.holo_blue_dark))
+        if (esBandeja) {
+            holder.rating.visibility = View.GONE
         } else {
-            holder.rating.text = String.Companion.format(Locale.getDefault(), "⭐ %.1f (%d trabajos)", socio.rating, socio.trabajosRealizados)
-            holder.rating.setTextColor(holder.itemView.context.getColor(android.R.color.black))
+            holder.rating.visibility = View.VISIBLE
+            if (socio.trabajosRealizados == 0 && socio.rating == 0.0) {
+                holder.rating.text = "Nuevo en esta categoría"
+                holder.rating.setTextColor(Color.parseColor("#1565C0"))
+            } else {
+                val label = if (socio.trabajosRealizados == 1) "trabajo" else "trabajos"
+                holder.rating.text = String.format(
+                    Locale.getDefault(),
+                    "★ %.1f · %d %s",
+                    socio.rating,
+                    socio.trabajosRealizados,
+                    label
+                )
+                holder.rating.setTextColor(colorParaRating(socio.rating))
+            }
         }
+
+        holder.distancia.visibility = View.GONE
 
         if (!socio.fotoPerfilB64.isNullOrBlank()) {
             try {
-                val imageBytes = Base64.decode(socio.fotoPerfilB64, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                if (bitmap != null) holder.foto.setImageBitmap(bitmap) else holder.foto.setImageResource(R.drawable.ic_food)
+                val bytes  = Base64.decode(socio.fotoPerfilB64, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                if (bitmap != null) holder.foto.setImageBitmap(bitmap)
+                else                holder.foto.setImageResource(R.drawable.ic_food)
             } catch (e: Exception) {
-                Log.e("SocioAdapter", "Error: ${e.message}")
+                Log.e("SocioAdapter", "Error foto: ${e.message}")
                 holder.foto.setImageResource(R.drawable.ic_food)
             }
         } else {
             holder.foto.setImageResource(R.drawable.ic_food)
         }
 
-        if (socio.descripcion.isNotEmpty()) {
+        if (esBandeja) {
             holder.btnNegociar.text = if (socio.activo) "Abrir Chat" else "Ver Resumen"
-            holder.distancia.visibility = View.GONE
 
-            val clickAction = View.OnClickListener { onClick(socio) }
-            holder.btnNegociar.setOnClickListener(clickAction)
-            holder.itemView.setOnClickListener(clickAction)
-            holder.foto.setOnClickListener { abrirPerfilConFiltro(holder.itemView.context, socio, categoriaActual) }
+            val abrirChat = View.OnClickListener { onClick(socio) }
+            holder.btnNegociar.setOnClickListener(abrirChat)
+            holder.itemView.setOnClickListener(abrirChat)
+
+            holder.foto.setOnClickListener {
+                abrirPerfilConFiltro(holder.itemView.context, socio, null)
+            }
 
             holder.itemView.setOnLongClickListener {
                 onLongClick(socio)
                 true
             }
         } else {
-            holder.btnNegociar.text = "Ver Perfil"
-            holder.distancia.visibility = View.VISIBLE
-            val irAlPerfilAction = View.OnClickListener { abrirPerfilConFiltro(holder.itemView.context, socio, categoriaActual) }
-            holder.btnNegociar.setOnClickListener(irAlPerfilAction)
-            holder.itemView.setOnClickListener(irAlPerfilAction)
-            holder.foto.setOnClickListener(irAlPerfilAction)
+
+            holder.btnNegociar.text = "Ofertar"
+
+            val iniciarChat = View.OnClickListener { onClick(socio) }
+            holder.btnNegociar.setOnClickListener(iniciarChat)
+            holder.itemView.setOnClickListener(iniciarChat)
+
+            holder.foto.setOnClickListener {
+                abrirPerfilConFiltro(holder.itemView.context, socio, categoriaActual)
+            }
+
             holder.itemView.setOnLongClickListener(null)
         }
     }
@@ -104,6 +127,12 @@ class SocioAdapter(
         listaSocios.clear()
         listaSocios.addAll(nuevaLista)
         notifyDataSetChanged()
+    }
+
+    private fun colorParaRating(rating: Double): Int = when {
+        rating < 3.0 -> Color.parseColor("#D32F2F")
+        rating < 4.0 -> Color.parseColor("#F57C00")
+        else         -> Color.parseColor("#388E3C")
     }
 
     private fun abrirPerfilConFiltro(context: Context, socio: Socio, categoria: String?) {

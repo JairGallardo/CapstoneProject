@@ -7,12 +7,15 @@ import androidx.lifecycle.ViewModel
 import com.example.domingo.data.repository.MainRepository
 import com.example.domingo.model.ServicioFinalizado
 import com.example.domingo.model.Socio
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.example.domingo.R
 
 class MainViewModel : ViewModel() {
 
     private val repository = MainRepository()
+    private val db         = FirebaseFirestore.getInstance()
+
     private var historialListener: ListenerRegistration? = null
     private var bandejaListener:   ListenerRegistration? = null
 
@@ -36,7 +39,7 @@ class MainViewModel : ViewModel() {
 
     private val _bandejaSociosCompleta = MutableLiveData<List<Socio>>()
 
-    private val _filtroSeleccionado = MutableLiveData<String>("Todos")
+    private val _filtroSeleccionado = MutableLiveData<String>("Mensajes")
 
     private val _bandejaSociosFiltrada = MediatorLiveData<List<Socio>>().apply {
         addSource(_bandejaSociosCompleta) { updateFilteredList() }
@@ -44,13 +47,16 @@ class MainViewModel : ViewModel() {
     }
     val bandejaSocios: LiveData<List<Socio>> get() = _bandejaSociosFiltrada
 
+    private val _nombreUsuario = MutableLiveData<String>()
+    val nombreUsuario: LiveData<String> get() = _nombreUsuario
+
     fun actualizarFiltro(nuevoFiltro: String) {
         _filtroSeleccionado.value = nuevoFiltro
     }
 
     private fun updateFilteredList() {
         val lista  = _bandejaSociosCompleta.value ?: emptyList()
-        val filtro = _filtroSeleccionado.value    ?: "Todos"
+        val filtro = _filtroSeleccionado.value    ?: "Mensajes"
         _bandejaSociosFiltrada.value = when (filtro) {
             "Mensajes"    -> lista.filter  { it.activo  }
             "Finalizados" -> lista.filter  { !it.activo }
@@ -63,7 +69,8 @@ class MainViewModel : ViewModel() {
 
         repository.obtenerDatosUsuario(uid) { doc ->
             val esTrab = doc.getString("rol") == "trabajador"
-            _esTrabajador.value = esTrab
+            _esTrabajador.value  = esTrab
+            _nombreUsuario.value = doc.getString("nombre") ?: ""
 
             if (esTrab) {
                 _disponible.value = doc.getBoolean("disponible") ?: false
@@ -110,7 +117,7 @@ class MainViewModel : ViewModel() {
 
         bandejaListener?.remove()
         bandejaListener = repository.escucharBandejaEntrada(uid, esTrabajador) { documentos ->
-            val listaTemporal = mutableListOf<Socio>()
+            val listaTemporal   = mutableListOf<Socio>()
 
             if (documentos.isEmpty()) {
                 _bandejaSociosCompleta.value = listaTemporal
@@ -125,30 +132,97 @@ class MainViewModel : ViewModel() {
                 if (doc.getBoolean(campoOculto) == true) {
                     contadorProcesados++
                     if (contadorProcesados == totalDocumentos) {
-                        _bandejaSociosCompleta.value = listaTemporal
+                        _bandejaSociosCompleta.value = listaTemporal.toList()
                     }
                     return@forEach
                 }
 
-                val receptorId  = if (esTrabajador) doc.getString("clienteId")   ?: ""
-                else               doc.getString("trabajadorId") ?: ""
-                val ultimoMsg   = doc.getString("ultimoMensaje") ?: "Nuevo mensaje"
+                val receptorId = if (esTrabajador)
+                    doc.getString("clienteId")   ?: ""
+                else
+                    doc.getString("trabajadorId") ?: ""
+
+                val ultimoMsg    = doc.getString("ultimoMensaje") ?: "Nuevo mensaje"
+                val categoriaRaw = doc.getString("categoria") ?: ""
+                val categoriaDoc = normalizarCategoria(categoriaRaw)
+                val estaActivo   = doc.getBoolean("activo")   ?: true
 
                 repository.obtenerDatosUsuario(receptorId) { userRef ->
-                    listaTemporal.add(
-                        Socio(
-                            id              = doc.id,
-                            nombre          = userRef.getString("nombre")       ?: "Usuario",
-                            descripcion     = ultimoMsg,
-                            receptorId      = receptorId,
-                            fotoPerfilB64   = userRef.getString("fotoPerfilB64") ?: "",
-                            activo          = doc.getBoolean("activo") ?: true,
-                            ultimoEmisorId  = doc.getString("ultimoEmisorId") ?: ""
+                    val nombreReceptor = userRef.getString("nombre")        ?: "Usuario"
+                    val fotoReceptor   = userRef.getString("fotoPerfilB64") ?: ""
+
+                    if (!esTrabajador && categoriaDoc.isNotEmpty() && receptorId.isNotEmpty()) {
+                        db.collection("servicios_finalizados")
+                            .whereEqualTo("trabajadorId", receptorId)
+                            .whereEqualTo("categoria", categoriaDoc)
+                            .get()
+                            .addOnSuccessListener { serviciosSnap ->
+                                val trabajosCategoria = serviciosSnap.size()
+
+                                val ratingCategoria = if (!serviciosSnap.isEmpty) {
+                                    val suma = serviciosSnap.documents.sumOf {
+                                        it.getDouble("rating") ?: 0.0
+                                    }
+                                    if (suma > 0.0) suma / serviciosSnap.size()
+                                    else userRef.getDouble("rating") ?: 0.0
+                                } else {
+                                    if (trabajosCategoria == 0) 0.0
+                                    else userRef.getDouble("rating") ?: 0.0
+                                }
+
+                                listaTemporal.add(
+                                    Socio(
+                                        id                 = doc.id,
+                                        nombre             = nombreReceptor,
+                                        descripcion        = ultimoMsg,
+                                        receptorId         = receptorId,
+                                        fotoPerfilB64      = fotoReceptor,
+                                        activo             = estaActivo,
+                                        ultimoEmisorId     = doc.getString("ultimoEmisorId") ?: "",
+                                        rating             = ratingCategoria,
+                                        trabajosRealizados = trabajosCategoria
+                                    )
+                                )
+                                contadorProcesados++
+                                if (contadorProcesados == totalDocumentos) {
+                                    _bandejaSociosCompleta.value = listaTemporal.toList()
+                                }
+                            }
+                            .addOnFailureListener {
+                                listaTemporal.add(
+                                    Socio(
+                                        id             = doc.id,
+                                        nombre         = nombreReceptor,
+                                        descripcion    = ultimoMsg,
+                                        receptorId     = receptorId,
+                                        fotoPerfilB64  = fotoReceptor,
+                                        activo         = estaActivo,
+                                        ultimoEmisorId = doc.getString("ultimoEmisorId") ?: "",
+                                        rating         = userRef.getDouble("rating") ?: 0.0,
+                                        trabajosRealizados = 0
+                                    )
+                                )
+                                contadorProcesados++
+                                if (contadorProcesados == totalDocumentos) {
+                                    _bandejaSociosCompleta.value = listaTemporal.toList()
+                                }
+                            }
+                    } else {
+                        listaTemporal.add(
+                            Socio(
+                                id             = doc.id,
+                                nombre         = nombreReceptor,
+                                descripcion    = ultimoMsg,
+                                receptorId     = receptorId,
+                                fotoPerfilB64  = fotoReceptor,
+                                activo         = estaActivo,
+                                ultimoEmisorId = doc.getString("ultimoEmisorId") ?: ""
+                            )
                         )
-                    )
-                    contadorProcesados++
-                    if (contadorProcesados == totalDocumentos) {
-                        _bandejaSociosCompleta.value = listaTemporal
+                        contadorProcesados++
+                        if (contadorProcesados == totalDocumentos) {
+                            _bandejaSociosCompleta.value = listaTemporal.toList()
+                        }
                     }
                 }
             }
@@ -180,5 +254,27 @@ class MainViewModel : ViewModel() {
         super.onCleared()
         historialListener?.remove()
         bandejaListener?.remove()
+    }
+    private fun normalizarCategoria(raw: String): String {
+        val mapaOficial = mapOf(
+            "gasfitero"       to "Gasfitero",
+            "electricista"    to "Electricista",
+            "limpieza"        to "Limpieza",
+            "lavanderia"      to "Lavandería",
+            "lavandería"      to "Lavandería",
+            "mascotas"        to "Mascotas",
+            "pintor"          to "Pintor",
+            "carpintero"      to "Carpintero",
+            "jardineria"      to "Jardinería",
+            "jardinería"      to "Jardinería",
+            "soporte tecnico" to "Soporte Técnico",
+            "soporte técnico" to "Soporte Técnico"
+        )
+        val clave = raw.trim().lowercase(java.util.Locale.getDefault())
+        return mapaOficial[clave] ?: raw.trim()
+            .replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault())
+                else it.toString()
+            }
     }
 }

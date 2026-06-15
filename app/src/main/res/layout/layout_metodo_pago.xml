@@ -22,7 +22,6 @@
         <RadioButton android:id="@+id/rbEfectivo" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Efectivo" />
     </RadioGroup>
 
-    <!-- Sección desplegable para Yape/Plin -->
     <LinearLayout
         android:id="@+id/layoutDetallesPago"
         android:layout_width="match_parent"

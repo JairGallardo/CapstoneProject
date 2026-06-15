@@ -23,9 +23,14 @@ class RegistroViewModel : ViewModel() {
     private val _navegacionDestino = MutableLiveData<String>()
     val navegacionDestino: LiveData<String> get() = _navegacionDestino
 
-    fun validarYRegistrar(nombre: String, correo: String, pass: String, telefono: String, rol: String) {
+    fun validarYRegistrar(nombre: String, correo: String, pass: String, telefono: String, rol: String, terminosAceptados: Boolean) {
         _errorNombre.value = null
         _errorTelefono.value = null
+
+        if (!terminosAceptados) {
+            _estadoToast.value = "Debes aceptar los Términos y Condiciones para continuar"
+            return
+        }
 
         if (nombre.isEmpty() || correo.isEmpty() || pass.isEmpty() || telefono.isEmpty()) {
             _estadoToast.value = "Por favor, llena todos los campos"

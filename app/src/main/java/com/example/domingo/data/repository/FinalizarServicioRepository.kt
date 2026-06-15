@@ -35,6 +35,7 @@ class FinalizarServicioRepository {
 
     fun actualizarMetricasUsuario(
         usuarioReceptorId: String,
+        categoria: String,
         nota: Float,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
@@ -43,14 +44,33 @@ class FinalizarServicioRepository {
 
         db.runTransaction { transaction ->
             val snapshot = transaction.get(usuarioRef)
+
             val trabajosActuales = snapshot.getLong("trabajosRealizados") ?: 0L
             val ratingActual = snapshot.getDouble("rating") ?: 0.0
-
             val nuevosTrabajos = trabajosActuales + 1
             val nuevoRating = ((ratingActual * trabajosActuales) + nota) / nuevosTrabajos
 
             transaction.update(usuarioRef, "trabajosRealizados", nuevosTrabajos)
             transaction.update(usuarioRef, "rating", nuevoRating)
+
+            @Suppress("UNCHECKED_CAST")
+            val statsPorCategoria = snapshot.get("statsPorCategoria") as? Map<String, Map<String, Any>> ?: emptyMap()
+            val statsActuales = statsPorCategoria[categoria]
+            val trabajosCat = (statsActuales?.get("trabajos") as? Long) ?: 0L
+            val ratingCat = (statsActuales?.get("rating") as? Double) ?: 0.0
+
+            val nuevosTrabajosCat = trabajosCat + 1
+            val nuevoRatingCat = ((ratingCat * trabajosCat) + nota) / nuevosTrabajosCat
+
+            val nuevoStatsCategoria = mapOf(
+                "rating" to nuevoRatingCat,
+                "trabajos" to nuevosTrabajosCat
+            )
+
+            val nuevoMapaCompleto = statsPorCategoria.toMutableMap()
+            nuevoMapaCompleto[categoria] = nuevoStatsCategoria
+
+            transaction.update(usuarioRef, "statsPorCategoria", nuevoMapaCompleto)
         }
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }

@@ -4,16 +4,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_gray">
+    android:background="@color/background_page">
 
     <LinearLayout
         android:id="@+id/headerNotif"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/blue_confidence"
+        android:background="@color/green_primary"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="8dp"
+        android:paddingHorizontal="4dp"
         android:paddingVertical="12dp"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -23,16 +23,17 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Regresar"
             app:tint="@color/white" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="4dp"
             android:text="Notificaciones"
             android:textColor="@color/white"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
@@ -42,7 +43,7 @@
             android:layout_marginEnd="8dp"
             android:padding="8dp"
             android:text="Marcar leídas"
-            android:textColor="#BBDEFB"
+            android:textColor="@color/white"
             android:textSize="12sp"
             android:background="?attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
@@ -51,13 +52,13 @@
         android:id="@+id/tabsNotif"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/background_card"
         android:elevation="4dp"
         app:tabMode="scrollable"
         app:tabGravity="start"
-        app:tabSelectedTextColor="@color/blue_confidence"
-        app:tabIndicatorColor="@color/blue_confidence"
-        app:tabTextColor="#757575"
+        app:tabSelectedTextColor="@color/green_primary"
+        app:tabIndicatorColor="@color/green_primary"
+        app:tabTextColor="@color/text_secondary"
         app:layout_constraintTop_toBottomOf="@id/headerNotif" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -83,7 +84,8 @@
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:src="@android:drawable/ic_popup_reminder"
-            android:alpha="0.25" />
+            android:alpha="0.25"
+            app:tint="@color/green_lime" />
 
         <TextView
             android:id="@+id/tvVacioNotif"
@@ -91,7 +93,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Sin notificaciones"
-            android:textColor="#9E9E9E"
+            android:textColor="@color/text_hint"
             android:textSize="16sp" />
     </LinearLayout>
 

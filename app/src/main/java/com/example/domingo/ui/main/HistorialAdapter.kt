@@ -24,17 +24,27 @@ class HistorialAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_historial, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_historial, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = lista[position]
-        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-        holder.tvCategoria.text = item.categoria
-        holder.tvNombre.text = if (esTrabajador) "Cliente: ${item.clienteNombre}" else "Socio: ${item.trabajadorNombre}"
-        holder.tvFecha.text = sdf.format(Date(item.fecha))
+        holder.tvCategoria.text = item.categoria.ifBlank { "Servicio" }
+
+        holder.tvNombre.text = if (esTrabajador)
+            "Cliente: ${item.clienteNombre.ifBlank { "Usuario" }}"
+        else
+            "Trabajador: ${item.trabajadorNombre.ifBlank { "Usuario" }}"
+
+        holder.tvFecha.text = if (item.fecha > 0L) {
+            SimpleDateFormat("dd MMM yyyy · hh:mm a", Locale("es", "ES")).format(Date(item.fecha))
+        } else {
+            "Fecha no disponible"
+        }
+
         holder.tvMonto.text = "S/ ${String.format("%.2f", item.monto)}"
     }
 

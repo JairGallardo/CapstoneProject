@@ -1,8 +1,6 @@
 package com.example.domingo.ui.main
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,8 +19,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -34,16 +32,14 @@ import com.example.domingo.ui.listadotrabajadores.CategoriaAdapter
 import com.example.domingo.ui.perfil.PerfilActivity
 import com.example.domingo.ui.listadotrabajadores.ListadoTrabajadoresActivity
 import com.example.domingo.ui.negociacion.NegociacionActivity
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
-import com.google.android.gms.location.LocationServices
+import com.example.domingo.ui.atencion.AtencionClienteActivity
+import com.example.domingo.ui.notificaciones.NotificacionesActivity
 import com.google.android.material.tabs.TabLayout
 
 class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
     private lateinit var bandejaAdapter: SocioAdapter
-    private val fusedLocationClient by lazy { LocationServices.getFusedLocationProviderClient(this) }
     private val sugerenciasCategorias = arrayOf(
         "Gasfitero", "Electricista", "Limpieza", "Lavandería",
         "Mascotas", "Pintor", "Carpintero", "Jardinería", "Soporte Técnico"
@@ -79,19 +75,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val requestLocationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val fineLocation   = permissions[Manifest.permission.ACCESS_FINE_LOCATION]   ?: false
-        val coarseLocation = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
-        if (fineLocation || coarseLocation) {
-            obtenerCoordenadasYActivar()
-        } else {
-            Toast.makeText(this, "Se requiere ubicación para trabajar", Toast.LENGTH_LONG).show()
-            findViewById<SwitchCompat>(R.id.switchEstado)?.isChecked = false
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -121,6 +104,10 @@ class MainActivity : AppCompatActivity() {
                 esTrabajador = esTrabajador,
                 conteos      = viewModel.conteoPorCategoria.value ?: emptyMap()
             )
+        }
+
+        viewModel.nombreUsuario.observe(this) { nombre ->
+            findViewById<TextView>(R.id.tvGreeting)?.text = "Hola, $nombre"
         }
 
         viewModel.disponible.observe(this) { disponible ->
@@ -205,16 +192,23 @@ class MainActivity : AppCompatActivity() {
         val listaVisible = if (estaExpandidoCategorias) listaConConteos
         else listaConConteos.take(8)
 
-        categoriaAdapter?.actualizarLista(listaVisible)
-            ?: run {
-                val rvCategorias = findViewById<RecyclerView>(R.id.rvCategorias) ?: return
-                categoriaAdapter = CategoriaAdapter(
-                    lista          = listaVisible,
-                    esTrabajador   = esTrabajador,
-                    onClick        = { categoria -> abrirServicio(categoria.nombre) }
-                )
-                rvCategorias.adapter = categoriaAdapter
-            }
+        val rvCategorias = findViewById<RecyclerView>(R.id.rvCategorias) ?: return
+
+        if (categoriaAdapter == null) {
+            categoriaAdapter = CategoriaAdapter(
+                lista        = listaVisible,
+                esTrabajador = esTrabajador,
+                onClick      = { categoria -> abrirServicio(categoria.nombre) }
+            )
+            rvCategorias.adapter = categoriaAdapter
+        } else {
+            categoriaAdapter = CategoriaAdapter(
+                lista        = listaVisible,
+                esTrabajador = esTrabajador,
+                onClick      = { categoria -> abrirServicio(categoria.nombre) }
+            )
+            rvCategorias.adapter = categoriaAdapter
+        }
     }
 
     private fun setupCategorias() {
@@ -222,13 +216,6 @@ class MainActivity : AppCompatActivity() {
         val btnVerMas    = findViewById<TextView>(R.id.btnVerMasCategorias)
 
         rvCategorias.layoutManager = GridLayoutManager(this, 4)
-
-        categoriaAdapter = CategoriaAdapter(
-            lista        = listaMaestraCategorias.take(8),
-            esTrabajador = false,
-            onClick      = { categoria -> abrirServicio(categoria.nombre) }
-        )
-        rvCategorias.adapter = categoriaAdapter
 
         if (listaMaestraCategorias.size > 8) {
             btnVerMas?.visibility = View.VISIBLE
@@ -241,11 +228,21 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (!estaExpandidoCategorias) {
-                    categoriaAdapter?.actualizarLista(listaConConteos)
+                    categoriaAdapter = CategoriaAdapter(
+                        lista        = listaConConteos,
+                        esTrabajador = esTrabajador,
+                        onClick      = { categoria -> abrirServicio(categoria.nombre) }
+                    )
+                    rvCategorias.adapter = categoriaAdapter
                     btnVerMas.text = "Ver menos"
                     estaExpandidoCategorias = true
                 } else {
-                    categoriaAdapter?.actualizarLista(listaConConteos.take(8))
+                    categoriaAdapter = CategoriaAdapter(
+                        lista        = listaConConteos.take(8),
+                        esTrabajador = esTrabajador,
+                        onClick      = { categoria -> abrirServicio(categoria.nombre) }
+                    )
+                    rvCategorias.adapter = categoriaAdapter
                     btnVerMas.text = "Ver más categorías"
                     estaExpandidoCategorias = false
                 }
@@ -289,12 +286,6 @@ class MainActivity : AppCompatActivity() {
             viewModel.conmutarBandejaEntrada(true)
         }
 
-        val uid = viewModel.esTrabajador.value?.let {
-            if (it) viewModel.let { vm ->
-                val repository = com.example.domingo.data.repository.MainRepository()
-                repository.obtenerUsuarioId()
-            } else null
-        }
         if (viewModel.esTrabajador.value == true) {
             val mainRepo = com.example.domingo.data.repository.MainRepository()
             mainRepo.obtenerUsuarioId()?.let { viewModel.cargarConteoPorCategoria(it) }
@@ -304,38 +295,6 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         carruselHandler.removeCallbacks(carruselRunnable)
-    }
-
-    private fun verificarYCambiarDisponibilidad(activar: Boolean) {
-        if (!activar) { viewModel.cambiarDisponibilidad(false); return }
-
-        val googleApiAvailability = GoogleApiAvailability.getInstance()
-        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
-        if (resultCode != ConnectionResult.SUCCESS) {
-            findViewById<SwitchCompat>(R.id.switchEstado)?.isChecked = false
-            googleApiAvailability.makeGooglePlayServicesAvailable(this)
-            return
-        }
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            findViewById<SwitchCompat>(R.id.switchEstado)?.isChecked = false
-            requestLocationPermissionLauncher.launch(arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ))
-            return
-        }
-
-        obtenerCoordenadasYActivar()
-    }
-
-    private fun obtenerCoordenadasYActivar() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) viewModel.cambiarDisponibilidad(true, location.latitude, location.longitude)
-                else                  viewModel.cambiarDisponibilidad(true, null, null)
-            }
-        }
     }
 
     private fun setupBuscador() {
@@ -359,57 +318,93 @@ class MainActivity : AppCompatActivity() {
         val tabLayout    = findViewById<TabLayout>(R.id.tabFiltrosBandeja) ?: return
         val esTrabajador = viewModel.esTrabajador.value ?: false
 
-        tabLayout.visibility = if (esTrabajador) View.VISIBLE else View.GONE
-        if (!esTrabajador) return
+        tabLayout.visibility = View.VISIBLE
 
         if (tabLayout.tabCount == 0) {
             tabLayout.addTab(tabLayout.newTab().setText("Mensajes"))
             tabLayout.addTab(tabLayout.newTab().setText("Finalizados"))
         }
 
+        tabLayout.getTabAt(0)?.select()
+
         tabLayout.clearOnTabSelectedListeners()
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) { viewModel.actualizarFiltro(tab?.text?.toString() ?: "Mensajes") }
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                viewModel.actualizarFiltro(tab?.text?.toString() ?: "Mensajes")
+            }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
     }
 
+    private fun mostrarBandeja() {
+        val rvBandeja       = findViewById<RecyclerView>(R.id.rvBandejaEntrada)
+        val scrollView      = findViewById<NestedScrollView>(R.id.mainScrollView)
+        val headerPrincipal = findViewById<View>(R.id.headerBackground)
+        val headerBandeja   = findViewById<View>(R.id.headerBandeja)
+
+        rvBandeja.visibility = View.VISIBLE
+        setupFiltrosBandeja()
+
+        viewModel.actualizarFiltro("Mensajes")
+
+        scrollView?.visibility      = View.GONE
+        headerPrincipal?.visibility = View.GONE
+        headerBandeja?.visibility   = View.VISIBLE
+
+        viewModel.conmutarBandejaEntrada(true)
+    }
+
+    private fun ocultarBandeja() {
+        val rvBandeja       = findViewById<RecyclerView>(R.id.rvBandejaEntrada)
+        val scrollView      = findViewById<NestedScrollView>(R.id.mainScrollView)
+        val headerPrincipal = findViewById<View>(R.id.headerBackground)
+        val headerBandeja   = findViewById<View>(R.id.headerBandeja)
+
+        rvBandeja.visibility = View.GONE
+        findViewById<TabLayout>(R.id.tabFiltrosBandeja)?.visibility = View.GONE
+
+        scrollView?.visibility      = View.VISIBLE
+        headerPrincipal?.visibility = View.VISIBLE
+        headerBandeja?.visibility   = View.GONE
+
+        viewModel.conmutarBandejaEntrada(false)
+    }
+
     private fun setupListeners() {
-        val rvBandeja   = findViewById<RecyclerView>(R.id.rvBandejaEntrada)
-        val scrollView  = findViewById<androidx.core.widget.NestedScrollView>(R.id.mainScrollView)
-        val tvGreeting  = findViewById<TextView>(R.id.tvGreeting)
-        val searchCard  = findViewById<CardView>(R.id.searchCard)
+        val rvBandeja = findViewById<RecyclerView>(R.id.rvBandejaEntrada)
+
+        findViewById<ImageButton>(R.id.btnAtencionCliente)?.setOnClickListener {
+            startActivity(Intent(this, AtencionClienteActivity::class.java))
+        }
+
+        findViewById<ImageButton>(R.id.btnNotificaciones)?.setOnClickListener {
+            startActivity(Intent(this, NotificacionesActivity::class.java))
+        }
 
         findViewById<ImageButton>(R.id.btnIrAPerfil)?.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
         }
 
         findViewById<SwitchCompat>(R.id.switchEstado)?.setOnCheckedChangeListener { _, isChecked ->
-            verificarYCambiarDisponibilidad(isChecked)
+            viewModel.cambiarDisponibilidad(isChecked)
         }
 
         findViewById<ImageButton>(R.id.btnVerMensajes)?.setOnClickListener {
-            if (rvBandeja.visibility == View.GONE) {
-                rvBandeja.visibility = View.VISIBLE
-                setupFiltrosBandeja()
+            if (rvBandeja.visibility == View.GONE) mostrarBandeja() else ocultarBandeja()
+        }
 
-                val esTrabajador = viewModel.esTrabajador.value ?: false
-                viewModel.actualizarFiltro(if (esTrabajador) "Mensajes" else "Todos")
+        findViewById<ImageButton>(R.id.btnVolverBandeja)?.setOnClickListener {
+            ocultarBandeja()
+        }
+    }
 
-                scrollView?.visibility = View.GONE
-                searchCard?.visibility = View.GONE
-                tvGreeting?.text       = "Bandeja de Entrada"
-
-                viewModel.conmutarBandejaEntrada(true)
-            } else {
-                rvBandeja.visibility = View.GONE
-                findViewById<TabLayout>(R.id.tabFiltrosBandeja)?.visibility = View.GONE
-                scrollView?.visibility = View.VISIBLE
-                searchCard?.visibility = View.VISIBLE
-                tvGreeting?.text       = "¡Hola! ¿Qué necesitas hoy?"
-                viewModel.conmutarBandejaEntrada(false)
-            }
+    override fun onBackPressed() {
+        val rvBandeja = findViewById<RecyclerView>(R.id.rvBandejaEntrada)
+        if (rvBandeja.visibility == View.VISIBLE) {
+            ocultarBandeja()
+        } else {
+            super.onBackPressed()
         }
     }
 

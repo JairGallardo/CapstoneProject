@@ -1,5 +1,6 @@
 package com.example.domingo.data.repository
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
@@ -24,8 +25,12 @@ class ListadoTrabajadoresRepository {
             .whereArrayContains("categorias", categoria)
             .get()
             .addOnSuccessListener { onExito(it) }
-            .addOnFailureListener { onFallo(it) }
+            .addOnFailureListener { exception ->
+                Log.e("FirestoreIndex", "Falta índice en Firebase. Clic aquí para crearlo:", exception)
+                onFallo(exception)
+            }
     }
+
     fun crearNegociacionInicial(
         chatId: String,
         clienteId: String,
@@ -49,6 +54,7 @@ class ListadoTrabajadoresRepository {
                     .set(dataInicial, SetOptions.merge())
             }
     }
+
     fun buscarNegociacionActiva(
         clienteId: String,
         trabajadorId: String,

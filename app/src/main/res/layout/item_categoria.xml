@@ -7,7 +7,6 @@
     android:orientation="vertical"
     android:padding="8dp">
 
-    <!-- Contenedor relativo para poder superponer el badge de conteo -->
     <RelativeLayout
         android:layout_width="60dp"
         android:layout_height="60dp">
@@ -28,10 +27,6 @@
 
         </androidx.cardview.widget.CardView>
 
-        <!--
-            Badge con el número de trabajos realizados.
-            Solo se muestra cuando el usuario es trabajador (visibilidad controlada desde el Adapter).
-        -->
         <TextView
             android:id="@+id/tvConteoTrabajos"
             android:layout_width="20dp"

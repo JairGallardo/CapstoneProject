@@ -63,6 +63,11 @@ class NotificacionRepository {
             }
     }
 
+    /**
+     * FIX P1: método genérico para crear cualquier notificación en la subcolección
+     * del destinatario. Se llama desde los flujos de negocio (cancelación, rating, etc.)
+     * además de desde el FCM service cuando llega un push.
+     */
     fun crearNotificacion(
         destinatarioUid: String,
         titulo: String,
@@ -71,16 +76,55 @@ class NotificacionRepository {
         accionUrl: String = ""
     ) {
         val notif = hashMapOf(
-            "titulo"     to titulo,
-            "cuerpo"     to cuerpo,
-            "tipo"       to tipo,
-            "timestamp"  to System.currentTimeMillis(),
-            "leida"      to false,
-            "accionUrl"  to accionUrl
+            "titulo"    to titulo,
+            "cuerpo"    to cuerpo,
+            "tipo"      to tipo,
+            "timestamp" to System.currentTimeMillis(),
+            "leida"     to false,
+            "accionUrl" to accionUrl
         )
         db.collection("usuarios").document(destinatarioUid)
             .collection("notificaciones")
             .add(notif)
+    }
+
+    /**
+     * FIX P1: notificación específica de cancelación de servicio.
+     * Llama a este método desde donde proceses la cancelación
+     * (p. ej. NegociacionViewModel o el repositorio correspondiente)
+     * pasando el uid del trabajador Y el del cliente.
+     *
+     * Ejemplo de uso:
+     *   notifRepo.crearNotificacionCancelacion(
+     *       uidCancelador   = clienteId,
+     *       uidAfectado     = trabajadorId,
+     *       nombreCancelador = "María García",
+     *       categoria        = "Gasfitero"
+     *   )
+     */
+    fun crearNotificacionCancelacion(
+        uidCancelador: String,
+        uidAfectado: String,
+        nombreCancelador: String,
+        categoria: String,
+        chatId: String = ""
+    ) {
+        crearNotificacion(
+            destinatarioUid = uidAfectado,
+            titulo          = "❌ Servicio cancelado",
+            cuerpo          = "$nombreCancelador canceló el servicio de $categoria." +
+                    if (chatId.isNotEmpty()) " (Chat: $chatId)" else "",
+            tipo            = "SISTEMA",
+            accionUrl       = chatId
+        )
+
+        crearNotificacion(
+            destinatarioUid = uidCancelador,
+            titulo          = "Cancelación confirmada",
+            cuerpo          = "Cancelaste el servicio de $categoria. Puedes buscar otro especialista.",
+            tipo            = "SISTEMA",
+            accionUrl       = chatId
+        )
     }
 
     fun verificarYAvisarRating(uid: String) {
@@ -90,29 +134,32 @@ class NotificacionRepository {
 
             when {
                 rating <= 1.5 -> {
-                    // Bloquear cuenta
                     usuarioRef.update("cuentaBloqueada", true)
                     crearNotificacion(
                         destinatarioUid = uid,
-                        titulo = "🔒 Cuenta suspendida",
-                        cuerpo = "Tu cuenta ha sido suspendida por acumular demasiadas penalizaciones (rating: ${"%.1f".format(rating)}). Contacta a atención al cliente para apelar.",
-                        tipo   = "BLOQUEO"
+                        titulo          = "🔒 Cuenta suspendida",
+                        cuerpo          = "Tu cuenta ha sido suspendida por acumular demasiadas " +
+                                "penalizaciones (rating: ${"%.1f".format(rating)}). " +
+                                "Contacta a atención al cliente para apelar.",
+                        tipo            = "BLOQUEO"
                     )
                 }
                 rating <= 2.0 -> {
                     crearNotificacion(
                         destinatarioUid = uid,
-                        titulo = "🚨 Advertencia: suspensión inminente",
-                        cuerpo = "Tu calificación bajó a ${"%.1f".format(rating)}/5. Si continúa bajando, tu cuenta será suspendida. Contacta atención al cliente si crees que fue un error.",
-                        tipo   = "AVISO_RATING"
+                        titulo          = "🚨 Advertencia: suspensión inminente",
+                        cuerpo          = "Tu calificación bajó a ${"%.1f".format(rating)}/5. " +
+                                "Si continúa bajando, tu cuenta será suspendida.",
+                        tipo            = "AVISO_RATING"
                     )
                 }
                 rating <= 3.0 -> {
                     crearNotificacion(
                         destinatarioUid = uid,
-                        titulo = "⚠️ Tu calificación está en observación",
-                        cuerpo = "Tu calificación actual es ${"%.1f".format(rating)}/5. Las cuentas por debajo de 3 estrellas están bajo revisión y pueden ser suspendidas. Sigue brindando un buen servicio para recuperarla.",
-                        tipo   = "AVISO_RATING"
+                        titulo          = "⚠️ Tu calificación está en observación",
+                        cuerpo          = "Tu calificación actual es ${"%.1f".format(rating)}/5. " +
+                                "Las cuentas por debajo de 3 estrellas están bajo revisión.",
+                        tipo            = "AVISO_RATING"
                     )
                 }
             }
@@ -124,16 +171,18 @@ class NotificacionRepository {
         motivo: String,
         descripcion: String,
         idTicketRelacionado: String,
+        fotosB64: List<String> = emptyList(),
         onExito: () -> Unit,
         onError: (Exception) -> Unit
     ) {
         val ticket = hashMapOf(
-            "uid"                  to uid,
-            "motivo"               to motivo,
-            "descripcion"          to descripcion,
-            "idTicketRelacionado"  to idTicketRelacionado,
-            "timestamp"            to System.currentTimeMillis(),
-            "estado"               to "PENDIENTE"
+            "uid"                 to uid,
+            "motivo"              to motivo,
+            "descripcion"         to descripcion,
+            "idTicketRelacionado" to idTicketRelacionado,
+            "fotosB64"            to fotosB64,
+            "timestamp"           to System.currentTimeMillis(),
+            "estado"              to "PENDIENTE"
         )
         db.collection("soporte_tickets").add(ticket)
             .addOnSuccessListener { onExito() }

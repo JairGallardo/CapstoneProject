@@ -39,6 +39,23 @@ class PerfilRepository {
             .addOnFailureListener { onFailure(it) }
     }
 
+    fun cargarResenasPorCategoria(
+        usuarioId: String,
+        categoria: String,
+        onSuccess: (List<Map<String, Any>>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection("usuarios").document(usuarioId)
+            .collection("resenas")
+            .whereEqualTo("categoria", categoria)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { snap ->
+                val lista = snap.documents.mapNotNull { it.data }
+                onSuccess(lista)
+            }
+            .addOnFailureListener { onFailure(it) }
+    }
     fun agregarFotoPortafolio(uid: String, fotoId: String, fotoData: Any, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
         db.collection("usuarios").document(uid)
             .collection("portafolio").document(fotoId)
